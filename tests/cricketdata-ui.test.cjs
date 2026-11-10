@@ -1,0 +1,16 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('app.js','utf8');
+const state={cricket:{data:{coverage:'complete',retrievedAt:new Date().toISOString(),matches:[]}}};
+const context=vm.createContext({state,Date,Map});
+for(const [start,end] of [['function cricketMatchName','function cricketChoice'],['function cricketRoute','function isSingleOver'],['function cricketMatchState','function renderCricketLiveCount']])vm.runInContext(source.slice(source.indexOf(start),source.indexOf(end)),context);
+const run=code=>vm.runInContext(code,context);
+assert.equal(run("cricketRoute('cricket/cricapi:37c4b752-cba7-474c-a413-45679a2f8927').matchId"),'cricapi:37c4b752-cba7-474c-a413-45679a2f8927');
+assert.equal(run("cricketRoute('cricket/1234567').matchId"),'1234567');
+assert.equal(run("cricketRoute('cricket/invalid')"),null);
+assert.equal(run("cricketMatchName({teams:['India U19','UAE U19'],score:'irrelevant'})"),'India U19 v UAE U19');
+assert.equal(run('cricketLiveCountState().text'),'0');
+state.cricket.data.matches=[{id:'one',status:'live',statusUpdatedAt:new Date().toISOString()}];
+assert.equal(run('cricketLiveCountState().text'),'1');
+state.cricket.data.coverage='partial';assert.equal(run('cricketLiveCountState().text'),'1+');
+state.cricket.data.matches[0].statusUpdatedAt=new Date(Date.now()-240000).toISOString();assert.equal(run('cricketLiveCountState().text'),'—');
+console.log('CricketData UI checks passed: legacy and provider routes, team names, empty, partial and stale live counts.');

@@ -14,6 +14,42 @@
     mr:'Opinzo — विचार करा. अंदाज वर्तवा. सिद्ध करा.'
   };
   const dictionaryRows = [
+    ["OPINZO / MATCH CENTRE", "OPINZO / मैच सेंटर", "OPINZO / सामना केंद्र"],
+    ["Every match.", "हर मैच।", "प्रत्येक सामना."],
+    ["Your call.", "तुम्हारा अनुमान।", "तुमचा अंदाज."],
+    ["Cricket scores. Clear questions. Your next prediction.", "क्रिकेट स्कोर। स्पष्ट सवाल। तुम्हारा अगला अनुमान।", "क्रिकेट स्कोअर. स्पष्ट प्रश्न. तुमचा पुढचा अंदाज."],
+    ["FREE TO PLAY · VIRTUAL POINTS", "खेलना मुफ़्त · वर्चुअल पॉइंट्स", "मोफत खेळा · आभासी गुण"],
+    ["CRICKET", "क्रिकेट", "क्रिकेट"],
+    ["YOUR MATCHDAY", "तुम्हारा मैच डे", "तुमचा सामन्याचा दिवस"],
+    ["Make your call.", "अपना अनुमान लगाओ।", "तुमचा अंदाज वर्तवा."],
+    ["Open a match to see its published prediction questions.", "प्रकाशित अनुमान के सवाल देखने के लिए मैच खोलो।", "प्रकाशित अंदाजाचे प्रश्न पाहण्यासाठी सामना उघडा."],
+    ["Read the question and cutoff.", "सवाल और अंतिम समय पढ़ो।", "प्रश्न आणि अंतिम वेळ वाचा."],
+    ["Choose a side with free points.", "मुफ़्त पॉइंट्स से अपना पक्ष चुनो।", "मोफत गुणांनी तुमची बाजू निवडा."],
+    ["Track the verified result.", "सत्यापित परिणाम देखो।", "पडताळलेला निकाल पाहा."],
+    ["My predictions →", "मेरे अनुमान →", "माझे अंदाज →"],
+    ["500 free starting points", "शुरू में 500 मुफ़्त पॉइंट्स", "सुरुवातीला 500 मोफत गुण"],
+    ["Points have no cash value. No deposits or withdrawals.", "पॉइंट्स का नकद मूल्य नहीं है। जमा या निकासी नहीं।", "गुणांना रोख मूल्य नाही. पैसे जमा किंवा काढता येत नाहीत."],
+    ["No matches for this filter", "इस फ़िल्टर में कोई मैच नहीं", "या फिल्टरमध्ये सामने नाहीत"],
+    ["Try all matches or a different search. Questions appear after the admin publishes them.", "सभी मैच या दूसरी खोज आज़माओ। एडमिन के प्रकाशित करने पर सवाल दिखेंगे।", "सर्व सामने किंवा दुसरा शोध वापरा. प्रशासकाने प्रकाशित केल्यावर प्रश्न दिसतील."],
+    ["Show all matches", "सभी मैच दिखाओ", "सर्व सामने दाखवा"],
+    ["MATCH / QUESTION", "मैच / सवाल", "सामना / प्रश्न"],
+    ["SCORE FEED", "स्कोर फ़ीड", "स्कोअर फीड"],
+    ["DETAILS", "जानकारी", "तपशील"],
+    ["2× points if correct", "सही होने पर 2× पॉइंट्स", "बरोबर असल्यास 2× गुण"],
+    ["✓ Prediction recorded", "✓ अनुमान दर्ज हुआ", "✓ अंदाज नोंदवला"],
+    ["Questions pending", "सवाल आने बाकी हैं", "प्रश्न प्रलंबित आहेत"],
+    ["Awaiting published prediction questions", "अनुमान के सवाल प्रकाशित होने की प्रतीक्षा", "अंदाजाचे प्रश्न प्रकाशित होण्याची प्रतीक्षा"],
+    ["Open match", "मैच खोलो", "सामना उघडा"],
+    ["All matches", "सभी मैच", "सर्व सामने"],
+    ["Open questions", "खुले सवाल", "खुले प्रश्न"],
+    ["All prediction types", "सभी अनुमान प्रकार", "सर्व अंदाज प्रकार"],
+    ["Sessions / runs", "सेशन / रन", "सेशन / धावा"],
+    ["Players", "खिलाड़ी", "खेळाडू"],
+    ["Home", "होम", "मुख्यपृष्ठ"],
+    ["🏏 Cricket", "🏏 क्रिकेट", "🏏 क्रिकेट"],
+    ["Sports predictions", "खेल के अनुमान", "क्रीडा अंदाज"],
+    ["FREE VIRTUAL POINTS", "मुफ़्त वर्चुअल पॉइंट्स", "मोफत आभासी गुण"],
+
     // Official sample questions supplied by OPINZO itself.
     // Third-party/user-authored questions are never machine-translated.
     ['Will Bitcoin close above $100,000 at the end of this month?','क्या इस महीने के अंत में बिटकॉइन $100,000 से ऊपर बंद होगा?','या महिन्याच्या शेवटी बिटकॉइन $100,000 च्या वर बंद होईल का?'],
@@ -464,3 +500,4 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
+

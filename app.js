@@ -16,7 +16,7 @@
     mode: isLive ? 'live' : 'demo', view:'explore', category:'All', query:'', sort:'popular',
     markets:[], predictions:[], ledger:[], leaderboard:[], profile:null, user:null,
     admin:false, modal:null, voteChoice:'yes', stake:25, authTab:'signin', busy:false,
-    demo:null, error:'', recovery:recoveryArrival, cricket:{data:null,loading:false,error:'',fetchedAt:0,lastAttempt:0}
+    demo:null, error:'', recovery:recoveryArrival, cricket:{data:null,loading:false,error:'',fetchedAt:0,lastAttempt:0,onlyOpen:false,kind:'all'}
   };
   const $ = (s) => document.querySelector(s);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -192,13 +192,27 @@
   function cricketPanel() {
     return `<section class="cricket-panel" aria-label="Live cricket"><div class="section-heading"><div><div class="eyebrow">SPORTS / CRICKET</div><h2>🏏 Live cricket scores</h2><p>Current scores from ESPNcricinfo. Auto-refresh every 2 minutes while this page is visible.</p></div><button class="btn-outline btn-small" data-action="refreshCricket" type="button">Refresh scores</button></div><div id="cricketScores" aria-live="polite">${cricketContent()}</div><p class="subtle">Scores can be delayed by the provider. * marks the batting side in the source feed. Scores do not automatically settle prediction questions.</p></section>`;
   }
-  function cricketView(){return `<section class="cricket-hero"><img src="assets/cricket-arena-v1.webp" class="cricket-hero-art" alt="" aria-hidden="true" width="1440" height="720" fetchpriority="high"><div class="cricket-hero-copy"><div class="eyebrow">SPORTS</div><h1 class="page-title">Cricket match centre</h1><p class="page-subtitle">Follow scores and open the full scorecard for match details.</p></div></section>${cricketPanel()}<button class="btn-outline" data-category="Sports" type="button">Browse Sports predictions →</button>`;}
+  function cricketView(){return `<section class="cricket-hero sports-banner"><img src="assets/cricket-arena-v1.webp" class="cricket-hero-art" alt="" aria-hidden="true" width="1440" height="720" fetchpriority="high"><div class="cricket-hero-copy"><div class="eyebrow">OPINZO / MATCH CENTRE</div><h1 class="page-title">Every match.<br>Your call.</h1><p class="page-subtitle">Cricket scores. Clear questions. Your next prediction.</p><span class="sports-free-badge">FREE TO PLAY · VIRTUAL POINTS</span></div><span class="sports-banner-label" aria-hidden="true">CRICKET</span></section><div class="sports-workspace"><div>${cricketPanel()}</div><aside class="sports-guide" aria-label="Prediction guide"><div class="sports-guide-top">YOUR MATCHDAY</div><h2>Make your call.</h2><p>Open a match to see its published prediction questions.</p><div class="sports-guide-step"><b>01</b><span>Read the question and cutoff.</span></div><div class="sports-guide-step"><b>02</b><span>Choose a side with free points.</span></div><div class="sports-guide-step"><b>03</b><span>Track the verified result.</span></div><button class="btn-primary" data-view="portfolio" type="button">My predictions →</button><div class="sports-guide-note"><strong>500 free starting points</strong><p>Points have no cash value. No deposits or withdrawals.</p></div></aside></div>`;}
+  function cricketRows(matches) {
+    const c=state.cricket;
+    const kinds=c.kind==='players'?['player_runs','player_wickets']:c.kind==='sessions'?['session_runs','innings_runs']:c.kind==='wickets'?['wickets']:c.kind==='winner'?['match_winner']:null;
+    const rows=matches.map(match=>{
+      const markets=state.markets.filter(m=>String(m.cricket_match_id)===String(match.id)&&marketStatus(m)==='open'&&(!kinds||kinds.includes(m.cricket_kind)));
+      return {match,markets};
+    }).filter(({match,markets})=>(!state.query||String(match.score).toLowerCase().includes(state.query.toLowerCase()))&&(!(c.onlyOpen||kinds)||markets.length));
+    if(!rows.length)return `<div class="empty-state"><h3>No matches for this filter</h3><p>Try all matches or a different search. Questions appear after the admin publishes them.</p><button class="btn-outline" type="button" data-action="cricketAll">Show all matches</button></div>`;
+    return `<div class="sports-table-wrap"><table class="sports-table"><caption class="sr-only">Cricket scores and published virtual-point predictions</caption><thead><tr><th scope="col">MATCH / QUESTION</th><th scope="col">SCORE FEED</th><th scope="col" class="yes-column">YES</th><th scope="col" class="no-column">NO</th><th scope="col">DETAILS</th></tr></thead><tbody>${rows.map(({match,markets})=>{
+      const m=markets[0],pick=m&&ownPick(m.id);
+      const choices=m&&!pick?`<td><button class="sports-choice sports-yes" type="button" data-action="vote" data-choice="yes" data-id="${esc(m.id)}"><strong>${esc(cricketChoice(m,'yes'))}</strong><small>2× points if correct</small></button></td><td><button class="sports-choice sports-no" type="button" data-action="vote" data-choice="no" data-id="${esc(m.id)}"><strong>${esc(cricketChoice(m,'no'))}</strong><small>2× points if correct</small></button></td>`:`<td colspan="2"><span class="sports-pending">${pick?'✓ Prediction recorded':'Questions pending'}</span></td>`;
+      return `<tr><td><div class="sports-match-name"><span class="sports-ball" aria-hidden="true">🏏</span><strong>${esc(cricketMatchName(match))}</strong></div><div class="sports-match-question">${m?esc(m.question):'Awaiting published prediction questions'}</div><a class="sports-score-link" href="${safeLink(match.url)}" target="_blank" rel="noopener noreferrer">Full scorecard ↗</a></td><td><span class="sports-score">${esc(match.score)}</span></td>${choices}<td><button class="sports-open" type="button" data-action="matchPredictions" data-id="${esc(match.id)}">Open match <span aria-hidden="true">↗</span></button><small class="sports-open-count">${markets.length} open</small></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
   function cricketContent() {
     const c=state.cricket,d=c.data;
     if(!d)return `<div class="empty-state"><h3>${c.loading?'Fetching cricket scores…':c.error?'Scores temporarily unavailable':'Loading match centre…'}</h3><p>${esc(c.error||'Connecting to the score provider.')}</p></div>`;
     const age=Date.now()-Date.parse(d.sourcePublishedAt||'');
     const delayed=Boolean(c.error||d.stale||!Number.isFinite(age)||age>600000);
-    return `<div class="cricket-status"><span class="mini-tag ${delayed?'':'yes'}">${delayed?'FEED DELAYED':'SCORE FEED CONNECTED'}</span><span>${d.sourcePublishedAt?'Provider update: '+niceTime(d.sourcePublishedAt):'Provider update time unavailable'}</span>${c.loading?'<span>Refreshing…</span>':''}</div>${c.error?`<p class="form-error">${esc(c.error)} Showing the last received scores.</p>`:''}<div class="cricket-grid">${d.matches.map(m=>`<article class="cricket-card"><div class="eyebrow">CRICKET · ESPNCRICINFO</div><h3>${esc(m.score)}</h3><a class="muted-link" href="${safeLink(m.url)}" target="_blank" rel="noopener noreferrer">Full scorecard ↗</a><button class="btn-primary cricket-predict" type="button" data-action="matchPredictions" data-id="${esc(m.id)}">Predictions · ${state.markets.filter(x=>x.cricket_match_id===m.id&&marketStatus(x)==='open').length} open →</button></article>`).join('')}</div><p class="subtle">Source: <a class="muted-link" href="https://static.espncricinfo.com/rss/livescores.xml" target="_blank" rel="noopener noreferrer">ESPNcricinfo score feed</a> · Last received ${niceTime(d.retrievedAt)}</p>`;
+    return `<div class="sports-toolbar"><div class="sports-tabs" role="group" aria-label="Match filters"><button type="button" data-action="cricketAll" class="${!c.onlyOpen?'active':''}" aria-pressed="${!c.onlyOpen}">All matches</button><button type="button" data-action="cricketOpen" class="${c.onlyOpen?'active':''}" aria-pressed="${c.onlyOpen}">Open questions</button></div><label class="sports-kind-label"><span class="sr-only">Prediction type</span><select id="cricketKindFilter" aria-label="Prediction type">${[['all','All prediction types'],['winner','Match winner'],['sessions','Sessions / runs'],['players','Players'],['wickets','Team wickets']].map(([value,label])=>`<option value="${value}" ${c.kind===value?'selected':''}>${label}</option>`).join('')}</select></label></div><div class="cricket-status"><span class="mini-tag ${delayed?'':'yes'}">${delayed?'FEED DELAYED':'SCORE FEED CONNECTED'}</span><span>${d.sourcePublishedAt?'Provider update: '+niceTime(d.sourcePublishedAt):'Provider update time unavailable'}</span>${c.loading?'<span>Refreshing…</span>':''}</div>${c.error?`<p class="form-error">${esc(c.error)} Showing the last received scores.</p>`:''}${cricketRows(d.matches)}<p class="subtle sports-source">Source: <a class="muted-link" href="https://static.espncricinfo.com/rss/livescores.xml" target="_blank" rel="noopener noreferrer">ESPNcricinfo score feed</a> · Last received ${niceTime(d.retrievedAt)}</p>`;
   }
   async function loadCricket(force=false){
     const c=state.cricket;
@@ -215,6 +229,7 @@
     finally{c.loading=false;const target=$('#cricketScores');if(target)target.innerHTML=cricketContent();}
   }
   function renderMain() {
+    document.body.classList.toggle('sports-mode',state.view==='cricket');
     const output=state.view==='cricket'?cricketView():state.view==='portfolio'?portfolioView():state.view==='wallet'?walletView():state.view==='leaderboard'?leaderboardView():state.view==='admin'?adminView():state.view==='trending'?trendingView():exploreView();
     $('#mainContent').innerHTML=(state.error?`<div class="info-banner"><span class="info-symbol">!</span><div><strong>Backend notice</strong><p>${esc(state.error)}</p></div></div>`:'')+output;
     if($('#cricketScores'))window.setTimeout(()=>loadCricket(false),0);
@@ -392,6 +407,8 @@
     else if(action==='closeCricketNow'){if(!state.admin||state.busy)return;state.busy=true;sb.rpc('admin_close_cricket_market',{p_market_id:mId}).then(async({error})=>{if(error)throw error;await loadLive();toast('Cricket predictions closed.','success');}).catch(e=>toast(humanError(e),'error')).finally(()=>{state.busy=false;});}
     else if(action==='createCricket')openCricketCreate(mId);
     else if(action==='refreshCricket')loadCricket(true);
+    else if(action==='cricketAll'){state.cricket.onlyOpen=false;state.cricket.kind='all';state.query='';$('#searchInput').value='';renderMain();}
+    else if(action==='cricketOpen'){state.cricket.onlyOpen=true;renderMain();}
     else if(action==='auth')openAuth();
     else if(action==='authSwitch'){state.authTab=state.authTab==='signin'?'signup':'signin';renderAuth();}
     else if(action==='forgotPassword')openPasswordReset();
@@ -420,8 +437,8 @@
     if(e.target.id==='settleForm'){e.preventDefault();settle(e.target);}
   });
   $('#sortSelect')?.addEventListener('change',e=>{state.sort=e.target.value;renderMain();});
-  document.addEventListener('change',e=>{if(e.target.id==='sortSelect'){state.sort=e.target.value;renderMain();}});
-  $('#searchInput').addEventListener('input',e=>{state.query=e.target.value;if(!['explore','trending'].includes(state.view))state.view='explore';renderMain();renderTop();});
+  document.addEventListener('change',e=>{if(e.target.id==='cricketKindFilter'){state.cricket.kind=e.target.value;renderMain();}if(e.target.id==='sortSelect'){state.sort=e.target.value;renderMain();}});
+  $('#searchInput').addEventListener('input',e=>{state.query=e.target.value;if(!['explore','trending','cricket'].includes(state.view))state.view='explore';renderMain();renderTop();});
   $('#walletTop').addEventListener('click',()=>navigate('wallet'));
   $('#authButton').addEventListener('click',openAuth);
   $('#sideHow').addEventListener('click',openHow);
@@ -466,6 +483,8 @@
   }
   init();
 })();
+
+
 
 
 

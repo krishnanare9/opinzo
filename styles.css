@@ -15,3 +15,15 @@
 
 
 .cricket-predict{display:block;width:100%;margin-top:15px;padding:10px;font-size:12px}.cricket-market-list{margin-top:20px}.cricket-market-list .market-card h3{min-height:0}.cricket-market-list .market-card{margin-bottom:4px}.btn-yes,.btn-no{overflow-wrap:anywhere}
+
+/* Locale chooser: compact across desktop and mobile, with accessible focus state. */
+.language-picker{display:inline-flex;align-items:center;gap:5px;min-width:0;background:#151a2a;border:1px solid #3c365d;border-radius:10px;padding:7px 9px;color:#dcd0ff;font-size:13px;line-height:1}
+.language-picker select{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:#f1edff;font-weight:750;font-size:12px;cursor:pointer;max-width:92px;outline:0;padding:2px 0}
+.language-picker option{color:#121725;background:#f4f1ff}
+.language-picker:focus-within{outline:2px solid #957aff;outline-offset:2px}
+html[lang="hi"] body,html[lang="mr"] body{font-family:"Noto Sans Devanagari","Nirmala UI","Mangal","DM Sans",sans-serif}
+html[lang="hi"] h1,html[lang="hi"] h2,html[lang="hi"] h3,html[lang="mr"] h1,html[lang="mr"] h2,html[lang="mr"] h3{font-family:"Noto Sans Devanagari","Nirmala UI","Mangal","Outfit",sans-serif;line-height:1.35;letter-spacing:0}
+html[lang="hi"] .nav-link,html[lang="mr"] .nav-link{line-height:1.4}
+@media(max-width:785px){.language-picker{padding:6px 7px}.language-picker select{max-width:76px;font-size:11px}}
+@media(max-width:570px){.language-picker{gap:3px;padding:6px 5px}.language-picker select{max-width:60px;font-size:10px}.language-picker>span{font-size:11px}.header-actions{flex-shrink:0}.header-coins{padding:5px 6px}.header-login{max-width:67px;padding:7px 5px}.search-box{flex-basis:80px}.language-picker select:focus-visible{outline:1px solid #a895ff}}
+@media(max-width:390px){.language-picker>span{display:none}.language-picker select{max-width:57px}.topbar{gap:5px}.header-login{max-width:52px}}

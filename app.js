@@ -4,6 +4,7 @@
 (() => {
   'use strict';
   const CONFIG = window.OPINZO_CONFIG || {};
+  const recoveryArrival = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
   const isConfigured = Boolean(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
   const isLive = isConfigured && Boolean(window.supabase?.createClient);
   const sb = isLive ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey) : null;
@@ -14,7 +15,7 @@
     mode: isLive ? 'live' : 'demo', view:'explore', category:'All', query:'', sort:'popular',
     markets:[], predictions:[], ledger:[], leaderboard:[], profile:null, user:null,
     admin:false, modal:null, voteChoice:'yes', stake:25, authTab:'signin', busy:false,
-    demo:null, error:''
+    demo:null, error:'', recovery:recoveryArrival
   };
   const $ = (s) => document.querySelector(s);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -162,13 +163,52 @@
   function openHow() {state.modal={type:'how'};modal(`<div class="eyebrow">THE BASICS</div><h2>How Opinzo works</h2><p class="modal-intro">Predict with free, non-redeemable virtual points. No real money involved.</p><div class="how-step"><span class="step-num">1</span><div><strong>Choose a question</strong><p>Read its precise deadline and official resolution criteria.</p></div></div><div class="how-step"><span class="step-num">2</span><div><strong>Pick Yes or No</strong><p>Stake 10, 25, 50 or 100 virtual points. Your stake is deducted immediately.</p></div></div><div class="how-step"><span class="step-num">3</span><div><strong>Earn by being right</strong><p>If correct, receive 2× your stake (net gain 1×). If wrong, your original stake is lost. No market will auto-settle without verification.</p></div></div><div class="how-step"><span class="step-num">4</span><div><strong>Build your track record</strong><p>See your history and compete on the leaderboard.</p></div></div><button class="btn-primary modal-submit" data-action="closeModal" type="button">Got it</button>`);}
   function openAuth() {
     if(state.mode==='demo') {state.modal={type:'demo'};modal(`<div class="eyebrow">BROWSER DEMO</div><h2>You're using the demo</h2><p class="modal-intro">This preview lets you test OPINZO without creating an account. Your 500 starting points, picks and outcomes stay only in this browser.</p><div class="info-banner"><span class="info-symbol">ⓘ</span><div>To enable email signup and online coins, connect the free Supabase project using the included <strong>README.md</strong>, <strong>schema.sql</strong> and <strong>config.js</strong> files.</div></div><button class="btn-primary modal-submit" type="button" data-action="closeModal">Continue demo</button>`);return;}
-    if(state.user) {state.modal={type:'account'};modal(`<div class="eyebrow">YOUR ACCOUNT</div><h2>${esc(state.profile?.username||'Opinzo member')}</h2><p class="modal-intro">${esc(state.user.email||'Signed in')}<br>Virtual balance: ${num(state.profile?.coin_balance||0)} points</p><button class="btn-outline modal-submit" type="button" data-action="logout">Sign out</button>`,'sm');return;}
+    if(state.user) {state.modal={type:'account'};modal(`<div class="eyebrow">YOUR ACCOUNT</div><h2>${esc(state.profile?.username||'Opinzo member')}</h2><p class="modal-intro">${esc(state.user.email||'Signed in')}<br>Virtual balance: ${num(state.profile?.coin_balance||0)} points</p><button class="btn-outline modal-submit" type="button" data-action="forgotPassword">Reset password by email</button><button class="btn-outline modal-submit" type="button" data-action="logout">Sign out</button>`,'sm');return;}
+    if(state.recovery){openPasswordUpdate();return;}
     state.authTab='signin';renderAuth();
   }
   function renderAuth() {
     state.modal={type:'auth'};
     const signup=state.authTab==='signup';
-    modal(`<div class="eyebrow">JOIN OPINZO</div><h2>${signup?'Create your free account':'Welcome back'}</h2><p class="modal-intro">${signup?'Start with 500 free virtual points.':'Sign in to see your predictions and wallet.'}</p><form id="authForm" class="admin-form">${signup?'<div class="field"><label for="authName">Public display name</label><input id="authName" name="username" minlength="3" maxlength="20" required placeholder="Your nickname"></div>':''}<div class="field"><label for="authEmail">Email address</label><input id="authEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com"></div><div class="field"><label for="authPassword">Password</label><input id="authPassword" name="password" type="password" minlength="6" autocomplete="${signup?'new-password':'current-password'}" required placeholder="At least 6 characters"></div><div class="form-error" id="authError" role="alert"></div><button class="btn-primary modal-submit" type="submit" ${state.busy?'disabled':''}>${signup?'Create free account':'Sign in'}</button></form><div class="auth-switch">${signup?'Already have an account?':'New to Opinzo?'} <button type="button" data-action="authSwitch">${signup?'Sign in':'Create account'}</button></div>`,'sm');
+    modal(`<div class="eyebrow">JOIN OPINZO</div><h2>${signup?'Create your free account':'Welcome back'}</h2><p class="modal-intro">${signup?'Start with 500 free virtual points.':'Sign in to see your predictions and wallet.'}</p><form id="authForm" class="admin-form">${signup?'<div class="field"><label for="authName">Public display name</label><input id="authName" name="username" minlength="3" maxlength="20" required placeholder="Your nickname"></div>':''}<div class="field"><label for="authEmail">Email address</label><input id="authEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com"></div><div class="field"><label for="authPassword">Password</label><input id="authPassword" name="password" type="password" minlength="6" autocomplete="${signup?'new-password':'current-password'}" required placeholder="At least 6 characters"></div><div class="form-error" id="authError" role="alert"></div><button class="btn-primary modal-submit" type="submit" ${state.busy?'disabled':''}>${signup?'Create free account':'Sign in'}</button></form>${!signup?'<div class="auth-switch"><button type="button" data-action="forgotPassword">Forgot password?</button></div>':''}<div class="auth-switch">${signup?'Already have an account?':'New to Opinzo?'} <button type="button" data-action="authSwitch">${signup?'Sign in':'Create account'}</button></div>`,'sm');
+  }
+  function openPasswordReset() {
+    if(!sb)return;
+    state.modal={type:'resetRequest'};
+    modal(`<div class="eyebrow">ACCOUNT RECOVERY</div><h2>Forgot password?</h2><p class="modal-intro">Enter your email to receive a secure password reset link.</p><form id="resetRequestForm" class="admin-form"><div class="field"><label for="resetEmail">Email address</label><input id="resetEmail" name="email" type="email" autocomplete="email" required value="${esc(state.user?.email||'')}" placeholder="you@example.com"></div><div id="recoveryError" class="form-error" role="alert"></div><button class="btn-primary modal-submit" type="submit">Send reset link</button></form><div class="auth-switch"><button data-action="backToSignin" type="button">Back to sign in</button></div>`,'sm');
+  }
+  async function requestPasswordReset(form) {
+    if(!sb||state.busy)return;
+    const button=form.querySelector('button[type="submit"]');
+    state.busy=true;button.disabled=true;$('#recoveryError').textContent='';
+    try {
+      const {error}=await sb.auth.resetPasswordForEmail(form.email.value.trim(),{redirectTo:window.location.origin+window.location.pathname});
+      if(error)throw error;
+      state.modal={type:'resetSent'};
+      modal(`<div class="eyebrow">CHECK YOUR EMAIL</div><h2>Reset link requested</h2><p class="modal-intro">If this address has an account, a reset email will arrive shortly. Check spam too. Open the newest link and choose a new password. Never share the link.</p><button class="btn-primary modal-submit" type="button" data-action="closeModal">Done</button>`,'sm');
+    }catch(e){const n=$('#recoveryError');if(n)n.textContent=humanError(e);}
+    finally{state.busy=false;button.disabled=false;}
+  }
+  function openPasswordUpdate() {
+    if(!sb)return;
+    state.modal={type:'passwordUpdate'};
+    modal(`<div class="eyebrow">SECURE YOUR ACCOUNT</div><h2>Choose a new password</h2><p class="modal-intro">Use at least 8 characters. This changes your Opinzo sign-in password.</p><form id="passwordUpdateForm" class="admin-form"><div class="field"><label for="newPassword">New password</label><input id="newPassword" name="password" type="password" minlength="8" autocomplete="new-password" required></div><div class="field"><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" name="confirmation" type="password" minlength="8" autocomplete="new-password" required></div><div id="recoveryError" class="form-error" role="alert"></div><button class="btn-primary modal-submit" type="submit">Update password</button></form>`,'sm');
+  }
+  async function updatePassword(form) {
+    if(!sb||state.busy||!state.recovery)return;
+    const errorEl=$('#recoveryError');errorEl.textContent='';
+    const password=form.password.value;
+    if(password.length<8){errorEl.textContent='Use at least 8 characters.';return;}
+    if(password!==form.confirmation.value){errorEl.textContent='Passwords do not match.';return;}
+    const button=form.querySelector('button[type="submit"]');state.busy=true;button.disabled=true;
+    try {
+      const {data:{session},error:sessionError}=await sb.auth.getSession();
+      if(sessionError)throw sessionError;
+      if(!session)throw Error('Reset link expired. Request a new reset email.');
+      const {error}=await sb.auth.updateUser({password});if(error)throw error;
+      state.recovery=false;form.reset();closeModal();toast('Password updated successfully.','success');await refreshLive();
+    }catch(e){if($('#recoveryError'))$('#recoveryError').textContent=humanError(e);}
+    finally{state.busy=false;button.disabled=false;}
   }
   function openVote(marketId,choice) {
     const m=getMarket(marketId);if(!m) return;
@@ -273,6 +313,8 @@
     else if(action==='closeModal')closeModal();
     else if(action==='auth')openAuth();
     else if(action==='authSwitch'){state.authTab=state.authTab==='signin'?'signup':'signin';renderAuth();}
+    else if(action==='forgotPassword')openPasswordReset();
+    else if(action==='backToSignin'){state.authTab='signin';renderAuth();}
     else if(action==='google')googleAuth();
     else if(action==='logout'&&sb){sb.auth.signOut().then(()=>{closeModal();state.user=null;loadLive();toast('Signed out.');});}
     else if(action==='pick'){state.voteChoice=button.dataset.choice;renderVote();}
@@ -289,6 +331,8 @@
     if(e.target.matches('[data-backdrop]'))closeModal();
   });
   document.addEventListener('submit',e=>{
+    if(e.target.id==='resetRequestForm'){e.preventDefault();requestPasswordReset(e.target);}
+    if(e.target.id==='passwordUpdateForm'){e.preventDefault();updatePassword(e.target);}
     if(e.target.id==='authForm'){e.preventDefault();authSubmit(e.target);}
     if(e.target.id==='createMarketForm'){e.preventDefault();createMarket(e.target);}
     if(e.target.id==='settleForm'){e.preventDefault();settle(e.target);}
@@ -313,11 +357,28 @@
     const hash=window.location.hash.slice(1);if(['explore','trending','portfolio','wallet','leaderboard','admin'].includes(hash))state.view=hash;
     if(state.mode==='demo'){state.demo=loadDemo();setDemoState();render();return;}
     try {
+      sb.auth.onAuthStateChange((event,session)=>{
+        if(event==='PASSWORD_RECOVERY'){
+          state.recovery=true;state.user=session?.user||null;
+          window.setTimeout(()=>{loadLive().catch(e=>toast(humanError(e),'error'));openPasswordUpdate();},0);
+          return;
+        }
+        const next=session?.user?.id||null;
+        if(next!==(state.user?.id||null)){
+          state.user=session?.user||null;
+          if(session&&state.modal?.type==='auth')closeModal();
+          window.setTimeout(()=>loadLive().catch(e=>toast(humanError(e),'error')),0);
+        }
+      });
       const {data:{session},error}=await sb.auth.getSession();if(error)throw error;state.user=session?.user||null;
-      sb.auth.onAuthStateChange((_ev,session)=>{const next=session?.user?.id||null;if(next!==(state.user?.id||null)){state.user=session?.user||null;window.setTimeout(()=>loadLive(),0);}});
       await loadLive();
+      if(state.recovery){
+        if(session)openPasswordUpdate();
+        else{state.recovery=false;openPasswordReset();$('#recoveryError').textContent='Reset link expired. Request a new reset email.';}
+      }
     }catch(e){state.error=humanError(e);render();}
   }
   init();
 })();
+
 

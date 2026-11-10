@@ -72,7 +72,7 @@
   async function loadLive() {
     if(!sb) return;
     const [marketResult,leaderResult]=await Promise.all([
-      sb.from('markets').select('id,question,description,category,ends_at,created_at,status,outcome,resolution_source,yes_votes,no_votes').order('created_at',{ascending:false}).limit(120),
+      sb.from('markets').select('id,question,description,category,ends_at,created_at,status,outcome,resolution_source,yes_votes,no_votes,cricket_match_id,cricket_kind,cricket_subject,cricket_line,cricket_period').order('created_at',{ascending:false}).limit(120),
       sb.rpc('get_leaderboard')
     ]);
     const {data:markets,error:marketError}=marketResult;
@@ -101,7 +101,7 @@
   function marketCard(m) {
     const s=marketStatus(m),pct=marketPerc(m),choice=ownPick(m.id),total=Number(m.yes_votes||0)+Number(m.no_votes||0);
     const cls=String(m.category||'').toLowerCase().replace(/[^a-z]/g,'');
-    return `<article class="market-card" data-market-card="${esc(m.id)}"><div class="market-card-top"><div class="market-category"><span class="category-icon ${cls}">${ICONS[m.category]||'◉'}</span>${esc(m.category)}</div><span class="market-status ${s}">${s==='open'?'● OPEN':s==='resolved'?'● RESOLVED':s==='void'?'● VOID':'● CLOSED'}</span></div><h3>${esc(m.question)}</h3><div class="bar-labels"><span class="yes">YES ${pct}%</span><span class="no">NO ${100-pct}%</span></div><div class="prob-bar" role="img" aria-label="Community picks: ${pct} percent yes, ${100-pct} percent no"><div class="yes-fill" style="width:${pct}%"></div></div><div class="market-meta"><span>${num(total)} community picks${state.mode==='demo'?' · sample':''}</span><span>${s==='resolved'?`Result: ${String(m.outcome||'').toUpperCase()}`:s==='void'?'Refunded':daysTo(m.ends_at)}</span></div><div class="market-actions">${s==='open'&&!choice?`<button class="btn-yes" type="button" data-action="vote" data-choice="yes" data-id="${esc(m.id)}">↗ Yes</button><button class="btn-no" type="button" data-action="vote" data-choice="no" data-id="${esc(m.id)}">↘ No</button>`:`<button class="btn-outline btn-small full-action" type="button" data-action="detail" data-id="${esc(m.id)}">${choice?`✓ Your pick: ${esc(choice.choice).toUpperCase()}`:'View result / details'} &nbsp;→</button>`}</div></article>`;
+    return `<article class="market-card" data-market-card="${esc(m.id)}"><div class="market-card-top"><div class="market-category"><span class="category-icon ${cls}">${ICONS[m.category]||'◉'}</span>${esc(m.category)}</div><span class="market-status ${s}">${s==='open'?'● OPEN':s==='resolved'?'● RESOLVED':s==='void'?'● VOID':'● CLOSED'}</span></div><h3>${esc(m.question)}</h3><div class="bar-labels"><span class="yes">YES ${pct}%</span><span class="no">NO ${100-pct}%</span></div><div class="prob-bar" role="img" aria-label="Community picks: ${pct} percent yes, ${100-pct} percent no"><div class="yes-fill" style="width:${pct}%"></div></div><div class="market-meta"><span>${num(total)} community picks${state.mode==='demo'?' · sample':''}</span><span>${s==='resolved'?`Result: ${String(m.outcome||'').toUpperCase()}`:s==='void'?'Refunded':daysTo(m.ends_at)}</span></div><div class="market-actions">${s==='open'&&!choice?`<button class="btn-yes" type="button" data-action="vote" data-choice="yes" data-id="${esc(m.id)}">↗ ${esc(cricketChoice(m,'yes'))}</button><button class="btn-no" type="button" data-action="vote" data-choice="no" data-id="${esc(m.id)}">↘ ${esc(cricketChoice(m,'no'))}</button>`:`<button class="btn-outline btn-small full-action" type="button" data-action="detail" data-id="${esc(m.id)}">${choice?`✓ Your pick: ${esc(choice.choice).toUpperCase()}`:'View result / details'} &nbsp;→</button>`}</div></article>`;
   }
   function filteredMarkets() {
     let markets=[...state.markets];
@@ -143,6 +143,52 @@
     if(!state.admin && state.mode!=='demo') return '<div class="empty-state"><h3>Admin access required</h3><p>This area is not available to your account.</p></div>';
     return `<div class="eyebrow">${state.mode==='demo'?'LOCAL SANDBOX':'ADMIN AREA'}</div><h1 class="page-title">Market management</h1><p class="page-subtitle">${state.mode==='demo'?'Simulated outcomes for browser testing only.':'Only approved admins can create and resolve markets through secure database functions.'}</p>${modeNotice()}<div class="wide-panel"><h3>Create a new ${state.mode==='demo'?'demo ':''}market</h3><form id="createMarketForm" class="admin-form"><div class="field"><label for="adminQuestion">Question (clear, verifiable outcome)</label><input id="adminQuestion" name="question" maxlength="220" minlength="15" required placeholder="Will XYZ happen by a specific date?"></div><div class="field"><label for="adminDescription">Settlement criteria</label><textarea id="adminDescription" name="description" maxlength="1000" required placeholder="Exact source, measurement, deadline, tie / cancellation policy..."></textarea></div><div class="two-col"><div class="field"><label for="adminCategory">Category</label><select name="category" id="adminCategory">${CATEGORIES.slice(1).map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label for="adminEnd">Closes at (your local time)</label><input name="ends_at" id="adminEnd" type="datetime-local" required></div></div><button class="btn-primary" ${state.busy?'disabled':''} type="submit">Create market</button></form></div><div class="wide-panel"><h3>Settle markets</h3><p class="subtle">${state.mode==='demo'?'Demo outcomes are arbitrary simulations.':'Real markets can only be settled after their closing time. Verify an authoritative source first.'}</p>${state.markets.filter(m=>!['resolved','void'].includes(marketStatus(m))).length?state.markets.filter(m=>!['resolved','void'].includes(marketStatus(m))).map(m=>`<div class="admin-market"><div class="history-info"><div class="history-title">${esc(m.question)}</div><div class="history-sub">${marketStatus(m).toUpperCase()} · Closes ${niceTime(m.ends_at)}</div></div><button type="button" class="btn-outline btn-small" data-action="settle" data-id="${esc(m.id)}" ${state.mode==='live'&&marketStatus(m)==='open'?'disabled title="Market not closed"':''}>Resolve</button></div>`).join(''):'<p class="subtle">No unresolved markets.</p>'}</div>${state.mode==='demo'?'<button class="btn-outline btn-small" data-action="resetDemo" type="button">Reset browser demo (erase local picks)</button>':''}`;
   }
+  const CRICKET_KINDS={match_winner:'Match winner',session_runs:'Session / over runs',innings_runs:'Innings total runs',wickets:'Team wickets',player_runs:'Player runs',player_wickets:'Player wickets'};
+  function cricketMatch(matchId){return state.cricket.data?.matches.find(m=>m.id===matchId);}
+  function cricketMatchName(m){return m.score.split(/\s+v\s+/i).map(x=>x.replace(/\s+\d.*$/,'').replace(/\*/g,'').trim()).join(' v ');}
+  function cricketChoice(m,side){
+    if(!m.cricket_kind)return side.toUpperCase();
+    if(m.cricket_kind==='match_winner')return side==='yes'?m.cricket_subject+' wins':'Other team wins';
+    return (side==='yes'?'Over ':'Under / equal ')+m.cricket_line;
+  }
+  function openMatchPredictions(matchId){
+    const match=cricketMatch(matchId);if(!match)return;
+    state.cricketMatchId=matchId;state.modal={type:'matchPredictions'};
+    const markets=state.markets.filter(m=>m.cricket_match_id===matchId);
+    modal(`<div class="eyebrow">CRICKET PREDICTIONS · VIRTUAL POINTS</div><h2>${esc(cricketMatchName(match))}</h2><p class="modal-intro">${esc(match.score)}</p><p class="subtle">Choose a question. Each line has its own deadline and settlement rules. Correct: 2× stake. Tie / cancellation follows the question's refund rules.</p>${state.admin?`<button class="btn-primary modal-submit" type="button" data-action="createCricket" data-id="${esc(matchId)}">Add prediction question</button>`:''}<div class="stack cricket-market-list">${markets.length?markets.map(marketCard).join(''):'<div class="empty-state"><h3>No prediction questions yet</h3><p>The admin must publish an exact line and closing time first.</p></div>'}</div>`);
+  }
+  function openCricketCreate(matchId){
+    if(!state.admin||!sb){toast('Admin access required.','error');return;}
+    const match=cricketMatch(matchId);if(!match)return;
+    state.cricketMatchId=matchId;state.modal={type:'cricketCreate'};
+    const end=new Date(Date.now()+30*60000);end.setMinutes(end.getMinutes()-end.getTimezoneOffset());
+    const teams=cricketMatchName(match).split(' v ');
+    modal(`<div class="eyebrow">ADMIN · CRICKET</div><h2>Add match prediction</h2><p class="modal-intro">${esc(cricketMatchName(match))}</p><form id="cricketCreateForm" class="admin-form"><div class="field"><label for="cricketKind">Prediction type</label><select name="kind" id="cricketKind">${Object.entries(CRICKET_KINDS).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div><div class="field"><label for="cricketSubject">Exact team or player</label><input id="cricketSubject" name="subject" required minlength="2" maxlength="80" value="${esc(teams[0])}" placeholder="Team name, or full player name"></div><div class="two-col"><div class="field"><label for="cricketLine">Over / Under line (ignored for winner)</label><input id="cricketLine" name="line" type="number" min="0" max="1000" step="0.5" value="49.5"></div><div class="field"><label for="cricketPeriod">Innings and exact period</label><input id="cricketPeriod" name="period" required minlength="3" maxlength="100" value="Full match" placeholder="1st innings, overs 1–6; or full innings"></div></div><div class="field"><label for="cricketEnd">Predictions close (local time)</label><input id="cricketEnd" name="ends_at" type="datetime-local" value="${end.toISOString().slice(0,16)}" required></div><div class="field"><label for="cricketRules">Exact settlement and refund rules</label><textarea id="cricketRules" name="rules" required minlength="30" maxlength="650" placeholder="Declare innings, overs, how DLS / reduced overs / retirement / abandoned matches are handled, and when to VOID."></textarea></div><p class="subtle">Close at least 5 minutes from now, before the deciding event. Only publish unresolved outcomes. Session/player results require admin verification against the official scorecard.</p><div id="cricketCreateError" class="form-error" role="alert"></div><button class="btn-primary modal-submit" type="submit">Publish prediction</button></form>`);
+  }
+  function buildCricketQuestion(kind,subject,line,period,matchName){
+    if(kind==='match_winner')return `Will ${subject} win ${matchName}?`;
+    const unit=kind.includes('wickets')?'wickets':'runs';
+    return `Will ${subject} ${unit==='runs'?'score':kind==='player_wickets'?'take':'lose'} over ${line} ${unit} (${period})?`;
+  }
+  async function createCricketMarket(form){
+    if(!sb||!state.admin||state.busy)return;
+    const match=cricketMatch(state.cricketMatchId);if(!match)return;
+    const kind=form.kind.value,subject=form.subject.value.trim(),period=form.period.value.trim(),rules=form.rules.value.trim();
+    const line=kind==='match_winner'?null:Number(form.line.value),end=new Date(form.ends_at.value),errorEl=$('#cricketCreateError');
+    errorEl.textContent='';
+    if(!CRICKET_KINDS[kind]||subject.length<2||period.length<3||rules.length<30||isNaN(end.getTime())||end.getTime()<=Date.now()+300000){errorEl.textContent='Add exact rules and a cutoff at least 5 minutes from now.';return;}
+    if(kind!=='match_winner'&&(!form.line.value||!Number.isFinite(line)||line<0||line>1000||line*2%1!==0||(kind.includes('wickets')&&line>=10))){errorEl.textContent='Use a valid whole / half line. Wicket lines must be below 10.';return;}
+    const question=buildCricketQuestion(kind,subject,line,period,cricketMatchName(match));
+    const choiceRule=kind==='match_winner'?'YES: named team wins; NO: other team wins. Tie, draw, abandonment or no result: VOID.':`YES: strictly more than ${line}; NO: ${line} or less. `;
+    const description=`${CRICKET_KINDS[kind]} · ${cricketMatchName(match)} · ${period}. ${choiceRule} ${rules} Verify: ${match.url}`;
+    if(question.length>220||description.length>1000){errorEl.textContent='Question or rules are too long. Shorten the subject / period / rules.';return;}
+    const button=form.querySelector('button[type="submit"]');state.busy=true;button.disabled=true;
+    try{
+      const {error}=await sb.rpc('admin_create_cricket_market',{p_match_id:match.id,p_kind:kind,p_subject:subject,p_line:line,p_period:period,p_question:question,p_description:description,p_ends_at:end.toISOString()});
+      if(error)throw error;await loadLive();state.busy=false;openMatchPredictions(match.id);toast('Cricket prediction published.','success');
+    }catch(e){if($('#cricketCreateError'))$('#cricketCreateError').textContent=humanError(e);else toast(humanError(e),'error');}
+    finally{state.busy=false;button.disabled=false;}
+  }
   function cricketPanel() {
     return `<section class="cricket-panel" aria-label="Live cricket"><div class="section-heading"><div><div class="eyebrow">SPORTS / CRICKET</div><h2>🏏 Live cricket scores</h2><p>Current scores from ESPNcricinfo. Auto-refresh every 2 minutes while this page is visible.</p></div><button class="btn-outline btn-small" data-action="refreshCricket" type="button">Refresh scores</button></div><div id="cricketScores" aria-live="polite">${cricketContent()}</div><p class="subtle">Scores can be delayed by the provider. * marks the batting side in the source feed. Scores do not automatically settle prediction questions.</p></section>`;
   }
@@ -152,7 +198,7 @@
     if(!d)return `<div class="empty-state"><h3>${c.loading?'Fetching cricket scores…':c.error?'Scores temporarily unavailable':'Loading match centre…'}</h3><p>${esc(c.error||'Connecting to the score provider.')}</p></div>`;
     const age=Date.now()-Date.parse(d.sourcePublishedAt||'');
     const delayed=Boolean(c.error||d.stale||!Number.isFinite(age)||age>600000);
-    return `<div class="cricket-status"><span class="mini-tag ${delayed?'':'yes'}">${delayed?'FEED DELAYED':'SCORE FEED CONNECTED'}</span><span>${d.sourcePublishedAt?'Provider update: '+niceTime(d.sourcePublishedAt):'Provider update time unavailable'}</span>${c.loading?'<span>Refreshing…</span>':''}</div>${c.error?`<p class="form-error">${esc(c.error)} Showing the last received scores.</p>`:''}<div class="cricket-grid">${d.matches.map(m=>`<article class="cricket-card"><div class="eyebrow">CRICKET · ESPNCRICINFO</div><h3>${esc(m.score)}</h3><a class="muted-link" href="${safeLink(m.url)}" target="_blank" rel="noopener noreferrer">Full scorecard ↗</a></article>`).join('')}</div><p class="subtle">Source: <a class="muted-link" href="https://static.espncricinfo.com/rss/livescores.xml" target="_blank" rel="noopener noreferrer">ESPNcricinfo score feed</a> · Last received ${niceTime(d.retrievedAt)}</p>`;
+    return `<div class="cricket-status"><span class="mini-tag ${delayed?'':'yes'}">${delayed?'FEED DELAYED':'SCORE FEED CONNECTED'}</span><span>${d.sourcePublishedAt?'Provider update: '+niceTime(d.sourcePublishedAt):'Provider update time unavailable'}</span>${c.loading?'<span>Refreshing…</span>':''}</div>${c.error?`<p class="form-error">${esc(c.error)} Showing the last received scores.</p>`:''}<div class="cricket-grid">${d.matches.map(m=>`<article class="cricket-card"><div class="eyebrow">CRICKET · ESPNCRICINFO</div><h3>${esc(m.score)}</h3><a class="muted-link" href="${safeLink(m.url)}" target="_blank" rel="noopener noreferrer">Full scorecard ↗</a><button class="btn-primary cricket-predict" type="button" data-action="matchPredictions" data-id="${esc(m.id)}">Predictions · ${state.markets.filter(x=>x.cricket_match_id===m.id&&marketStatus(x)==='open').length} open →</button></article>`).join('')}</div><p class="subtle">Source: <a class="muted-link" href="https://static.espncricinfo.com/rss/livescores.xml" target="_blank" rel="noopener noreferrer">ESPNcricinfo score feed</a> · Last received ${niceTime(d.retrievedAt)}</p>`;
   }
   async function loadCricket(force=false){
     const c=state.cricket;
@@ -252,7 +298,7 @@
   function renderVote() {
     const m=getMarket(state.modal.marketId);if(!m){closeModal();return;}
     const bal=Number(state.profile?.coin_balance||0);const amount=state.stake;
-    modal(`<div class="eyebrow">MAKE A PREDICTION</div><h2>Pick your side</h2><div class="market-category"><span class="category-icon">${ICONS[m.category]||'◎'}</span>${esc(m.category)} · Ends ${niceTime(m.ends_at)}</div><h3 class="modal-question">${esc(m.question)}</h3><p class="subtle">${esc(m.description||'')}</p><div class="modal-options"><button class="option-card ${state.voteChoice==='yes'?'selected':''}" type="button" data-action="pick" data-choice="yes">↗ YES</button><button class="option-card no ${state.voteChoice==='no'?'selected':''}" type="button" data-action="pick" data-choice="no">↘ NO</button></div><div class="field"><label>Choose your virtual point stake</label></div><div class="stake-picker">${[10,25,50,100].map(n=>`<button type="button" data-action="stake" data-stake="${n}" class="${state.stake===n?'active':''}">${n}</button>`).join('')}</div><div class="vote-details"><span>Your balance</span><strong>◈ ${num(bal)} points</strong></div><div class="vote-details"><span>Stake deducted now</span><strong class="negative">−${num(amount)}</strong></div><div class="vote-details"><span>Payout if correct (includes stake)</span><strong class="positive">+${num(amount*2)}</strong></div><div class="settlement-note">Outcome is resolved by the admin after the deadline. Each market allows one prediction per account. ${state.mode==='demo'?'This is a browser-local simulation.':''}</div><button class="btn-primary modal-submit" type="button" data-action="submitVote" ${state.busy||amount>bal?'disabled':''}>Confirm ${state.voteChoice.toUpperCase()} · Stake ${amount} points</button>${amount>bal?'<p class="form-error">Insufficient points.</p>':''}`);
+    modal(`<div class="eyebrow">MAKE A PREDICTION</div><h2>Pick your side</h2><div class="market-category"><span class="category-icon">${ICONS[m.category]||'◎'}</span>${esc(m.category)} · Ends ${niceTime(m.ends_at)}</div><h3 class="modal-question">${esc(m.question)}</h3><p class="subtle">${esc(m.description||'')}</p><div class="modal-options"><button class="option-card ${state.voteChoice==='yes'?'selected':''}" type="button" data-action="pick" data-choice="yes">↗ ${esc(cricketChoice(m,'yes'))}</button><button class="option-card no ${state.voteChoice==='no'?'selected':''}" type="button" data-action="pick" data-choice="no">↘ ${esc(cricketChoice(m,'no'))}</button></div><div class="field"><label>Choose your virtual point stake</label></div><div class="stake-picker">${[10,25,50,100].map(n=>`<button type="button" data-action="stake" data-stake="${n}" class="${state.stake===n?'active':''}">${n}</button>`).join('')}</div><div class="vote-details"><span>Your balance</span><strong>◈ ${num(bal)} points</strong></div><div class="vote-details"><span>Stake deducted now</span><strong class="negative">−${num(amount)}</strong></div><div class="vote-details"><span>Payout if correct (includes stake)</span><strong class="positive">+${num(amount*2)}</strong></div><div class="settlement-note">Outcome is resolved by the admin after the deadline. Each market allows one prediction per account. ${state.mode==='demo'?'This is a browser-local simulation.':''}</div><button class="btn-primary modal-submit" type="button" data-action="submitVote" ${state.busy||amount>bal?'disabled':''}>Confirm ${state.voteChoice.toUpperCase()} · Stake ${amount} points</button>${amount>bal?'<p class="form-error">Insufficient points.</p>':''}`);
   }
   function openDetail(marketId) {
     const m=getMarket(marketId);if(!m)return;const p=ownPick(marketId);const status=marketStatus(m);
@@ -342,6 +388,8 @@
     else if(action==='vote')openVote(mId,button.dataset.choice);
     else if(action==='detail')openDetail(mId);
     else if(action==='closeModal')closeModal();
+    else if(action==='matchPredictions')openMatchPredictions(mId);
+    else if(action==='createCricket')openCricketCreate(mId);
     else if(action==='refreshCricket')loadCricket(true);
     else if(action==='auth')openAuth();
     else if(action==='authSwitch'){state.authTab=state.authTab==='signin'?'signup':'signin';renderAuth();}
@@ -365,6 +413,7 @@
   document.addEventListener('submit',e=>{
     if(e.target.id==='resetRequestForm'){e.preventDefault();requestPasswordReset(e.target);}
     if(e.target.id==='passwordUpdateForm'){e.preventDefault();updatePassword(e.target);}
+    if(e.target.id==='cricketCreateForm'){e.preventDefault();createCricketMarket(e.target);}
     if(e.target.id==='authForm'){e.preventDefault();authSubmit(e.target);}
     if(e.target.id==='createMarketForm'){e.preventDefault();createMarket(e.target);}
     if(e.target.id==='settleForm'){e.preventDefault();settle(e.target);}
@@ -415,6 +464,7 @@
   }
   init();
 })();
+
 
 
 

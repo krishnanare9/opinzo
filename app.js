@@ -160,6 +160,20 @@
     if(c.error||d?.stale||!Number.isFinite(time)||Date.now()-time>180000||time>Date.now()+60000)return 'unknown';
     return ['live','completed','scheduled'].includes(match?.status)?match.status:'unknown';
   }
+  function cricketLiveCountState(){
+    const matches=state.cricket.data?.matches;
+    if(!Array.isArray(matches)||!matches.length)return {text:'—',confirmed:0,complete:false};
+    const unique=new Map(matches.map(m=>[String(m.id),m])),statuses=[...unique.values()].map(cricketMatchState);
+    const count=statuses.filter(status=>status==='live').length,complete=!statuses.includes('unknown');
+    return {text:complete?String(count):count?count+'+':'—',confirmed:count,complete};
+  }
+  function renderCricketLiveCount(){
+    const badge=$('#cricketLiveBadge'),count=$('#cricketLiveCount');if(!badge||!count)return;
+    const status=cricketLiveCountState();count.textContent=status.text;
+    badge.classList.toggle('has-live',status.confirmed>0);badge.classList.toggle('unconfirmed',!status.complete);
+    badge.title=status.complete?status.confirmed+' confirmed live cricket matches':status.confirmed?'At least '+status.confirmed+' confirmed live matches; some statuses are unavailable.':'Live count unavailable: the score feed does not confirm match status.';
+    badge.setAttribute('aria-label',badge.title);
+  }
   function cricketLiveBadge(match){
     const status=cricketMatchState(match);
     return status==='live'?'<span class="match-state live">● LIVE</span>':status==='completed'?'<span class="match-state">FINISHED</span>':status==='scheduled'?'<span class="match-state">UPCOMING</span>':'<span class="match-state unknown">STATUS UNCONFIRMED</span>';
@@ -322,11 +336,11 @@
     const delayed=Boolean(c.error||d.stale||!Number.isFinite(age)||age>600000);
     return `<div class="sports-toolbar"><div class="sports-tabs" role="group" aria-label="Match filters"><button type="button" data-action="cricketAll" class="${!c.onlyOpen&&!c.onlyLive?'active':''}" aria-pressed="${!c.onlyOpen&&!c.onlyLive}">All matches</button><button type="button" data-action="cricketLive" class="${c.onlyLive?'active':''}" aria-pressed="${c.onlyLive}">Live</button><button type="button" data-action="cricketOpen" class="${c.onlyOpen?'active':''}" aria-pressed="${c.onlyOpen}">Open markets</button></div><label class="sports-kind-label"><span class="sr-only">Prediction type</span><select id="cricketKindFilter" aria-label="Prediction type">${[['all','All prediction types'],['winner','Match winner'],['sessions','Sessions / runs'],['players','Players'],['wickets','Team wickets']].map(([value,label])=>`<option value="${value}" ${c.kind===value?'selected':''}>${label}</option>`).join('')}</select></label></div><div class="cricket-status"><span class="mini-tag ${delayed?'':'yes'}">${delayed?'FEED DELAYED':'SCORE FEED CONNECTED'}</span><span>${d.sourcePublishedAt?'Provider update: '+niceTime(d.sourcePublishedAt):'Provider update time unavailable'}</span>${c.loading?'<span>Refreshing…</span>':''}</div>${c.error?`<p class="form-error">${esc(c.error)} Showing the last received scores.</p>`:''}<p class="match-status-note">Live status is not supplied by this score feed. Unconfirmed matches are not marked LIVE.</p>${cricketRows(d.matches)}<p class="subtle sports-source">Source: <a class="muted-link" href="https://static.espncricinfo.com/rss/livescores.xml" target="_blank" rel="noopener noreferrer">ESPNcricinfo score feed</a> · Last received ${niceTime(d.retrievedAt)}</p>`;
   }
-  async function loadCricket(force=false){
+  async function loadCricket(force=false,background=false){
     const c=state.cricket;
-    if(c.loading||document.visibilityState==='hidden'||!$('#cricketScores'))return;
+    if(c.loading||document.visibilityState==='hidden'||(!background&&!$('#cricketScores')))return;
     if(Date.now()-c.lastAttempt<10000||(!force&&c.data&&Date.now()-c.fetchedAt<120000))return;
-    c.loading=true;c.lastAttempt=Date.now();$('#cricketScores').innerHTML=cricketContent();
+    c.loading=true;c.lastAttempt=Date.now();const scoreTarget=$('#cricketScores');if(scoreTarget)scoreTarget.innerHTML=cricketContent();
     try{
       if(!CONFIG.supabaseUrl||!CONFIG.supabaseAnonKey)throw Error('Live scores require an online connection.');
       const response=await fetch(CONFIG.supabaseUrl+'/functions/v1/cricket-live',{headers:{apikey:CONFIG.supabaseAnonKey},signal:AbortSignal.timeout(15000)});
@@ -334,7 +348,7 @@
       if(!Array.isArray(d.matches)||!d.matches.length)throw Error('No current scores returned.');
       c.data=d;c.error='';c.fetchedAt=Date.now();
     }catch(e){c.error=e.name==='TimeoutError'?'Score request timed out. Please retry.':humanError(e);}
-    finally{c.loading=false;const target=$('#cricketScores');if(state.view==='cricket'&&state.cricketMatchId)renderMain();else{if(target)target.innerHTML=cricketContent();renderCompetitionNav();}}
+    finally{c.loading=false;const target=$('#cricketScores');if(state.view==='cricket'&&state.cricketMatchId)renderMain();else{if(target)target.innerHTML=cricketContent();renderCompetitionNav();}renderCricketLiveCount();}
   }
   function renderMain() {
     document.body.classList.add('sports-mode');
@@ -363,6 +377,7 @@
     $('#adminNav').hidden=!state.admin&&state.mode!=='demo';
     $('#topAdminNav').hidden=!state.admin&&state.mode!=='demo';
     $('#homeSignup').hidden=Boolean(state.user);
+    renderCricketLiveCount();window.setTimeout(()=>loadCricket(false,true),0);
     $('#homeClock').textContent=new Date().toLocaleString(window.OPINZO_I18N?.dateLocale||'en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   }
   function render() {renderMain();renderRail();renderTop();}
@@ -567,9 +582,10 @@
       closeModal();state.view=route.view;state.cricketMatchId=route.matchId;state.cricketTab='all';state.category='All';state.query='';$('#searchInput').value='';render();
     }
   });
-  window.setInterval(()=>{if($('#cricketScores'))loadCricket(false);},120000);
+  window.setInterval(()=>loadCricket(false,true),120000);
+  window.setInterval(renderCricketLiveCount,30000);
   window.setInterval(()=>{if(state.view!=='cricket'||!state.cricketMatchId||state.busy||document.visibilityState==='hidden')return;if([...document.querySelectorAll('.event-choice[data-id]:not(:disabled)')].some(el=>{const m=getMarket(el.dataset.id);return !m||marketStatus(m)!=='open';}))renderMain();},5000);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&$('#cricketScores'))loadCricket(false);});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadCricket(false,true);});
   window.addEventListener('opinzo:language-changed',()=>{if(state.view!=='admin')render();});
   document.getElementById('footerYear').textContent=String(new Date().getFullYear());
   async function init() {

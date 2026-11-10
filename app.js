@@ -294,7 +294,8 @@
   }
   function renderMain() {
     document.body.classList.add('sports-mode');
-    document.body.classList.toggle('cricket-home-mode',(state.view==='cricket'&&!state.cricketMatchId)||state.view==='matches');
+    document.body.classList.add('cricket-home-mode');
+    document.body.classList.toggle('cricket-landing-mode',state.view==='cricket'&&!state.cricketMatchId);
     document.body.classList.toggle('cricket-list-mode',state.view==='matches');
     $('#searchInput').placeholder='Search teams, players or markets…';
     document.body.classList.toggle('cricket-event-mode',state.view==='cricket'&&Boolean(state.cricketMatchId));
@@ -315,6 +316,7 @@
     $('#authButton').textContent=state.mode==='demo'?'Demo player':state.user?(state.profile?.username||'Account'):'Sign in';
     document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===state.view));
     $('#adminNav').hidden=!state.admin&&state.mode!=='demo';
+    $('#topAdminNav').hidden=!state.admin&&state.mode!=='demo';
     $('#homeSignup').hidden=Boolean(state.user);
     $('#homeClock').textContent=new Date().toLocaleString(window.OPINZO_I18N?.dateLocale||'en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   }
@@ -462,7 +464,7 @@
     if(action==='listFilter'){if(!['all','live','upcoming','finished'].includes(button.dataset.filter))return;state.cricket.listFilter=button.dataset.filter;renderMain();}
     else if(action==='showHow')openHow();
     else if(action==='homeSignup'){if(state.user||state.mode==='demo'||state.recovery)openAuth();else{state.authTab='signup';renderAuth();}}
-    else if(action==='homeFilter'){if(state.view==='matches'){if(button.dataset.live==='true'){state.cricket.listFilter='live';renderMain();return;}navigate('cricket');}state.cricket.kind=['winner','sessions','players','wickets'].includes(button.dataset.kind)?button.dataset.kind:'all';state.cricket.onlyLive=button.dataset.live==='true';state.cricket.onlyOpen=false;renderMain();window.setTimeout(()=>$('#cricketMatchList')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'}),0);}
+    else if(action==='homeFilter'){if(state.view==='matches'&&button.dataset.live==='true'){state.cricket.listFilter='live';renderMain();return;}if(state.view!=='cricket'||state.cricketMatchId)navigate('cricket');state.cricket.kind=['winner','sessions','players','wickets'].includes(button.dataset.kind)?button.dataset.kind:'all';state.cricket.onlyLive=button.dataset.live==='true';state.cricket.onlyOpen=false;renderMain();window.setTimeout(()=>$('#cricketMatchList')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'}),0);}
     else if(action==='stepStake'){const amounts=[10,25,50,100],index=amounts.indexOf(state.stake);state.stake=amounts[Math.max(0,Math.min(3,index+Number(button.dataset.step)))];renderVote();}
     else if(action==='scrollCricket'){if(state.view!=='cricket'||state.cricketMatchId)navigate('cricket');$('#cricketMatchList')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});}
     else if(action==='scrollMarkets')$('#marketsSection')?.scrollIntoView({behavior:'smooth'});

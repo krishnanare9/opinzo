@@ -4,6 +4,7 @@
 (() => {
   'use strict';
   const CONFIG = window.OPINZO_CONFIG || {};
+  const authLinkError = new URLSearchParams(window.location.hash.slice(1)).get('error_description') || new URLSearchParams(window.location.search||'').get('error_description');
   const recoveryArrival = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
   const isConfigured = Boolean(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
   const isLive = isConfigured && Boolean(window.supabase?.createClient);
@@ -70,9 +71,13 @@
   }
   async function loadLive() {
     if(!sb) return;
-    const {data:markets,error:marketError}=await sb.from('markets').select('id,question,description,category,ends_at,created_at,status,outcome,resolution_source,yes_votes,no_votes').order('created_at',{ascending:false}).limit(120);
+    const [marketResult,leaderResult]=await Promise.all([
+      sb.from('markets').select('id,question,description,category,ends_at,created_at,status,outcome,resolution_source,yes_votes,no_votes').order('created_at',{ascending:false}).limit(120),
+      sb.rpc('get_leaderboard')
+    ]);
+    const {data:markets,error:marketError}=marketResult;
     if(marketError) {state.error=marketError.message;state.markets=[];} else {state.error='';state.markets=markets||[];}
-    const {data:leaders,error:leaderError}=await sb.rpc('get_leaderboard');
+    const {data:leaders,error:leaderError}=leaderResult;
     state.leaderboard=leaderError?[]:(leaders||[]);
     if(state.user) {
       const [p,x,l,a]=await Promise.all([
@@ -372,7 +377,8 @@
       });
       const {data:{session},error}=await sb.auth.getSession();if(error)throw error;state.user=session?.user||null;
       await loadLive();
-      if(state.recovery){
+      if(authLinkError){state.recovery=false;openPasswordReset();$('#recoveryError').textContent=authLinkError;}
+      else if(state.recovery){
         if(session)openPasswordUpdate();
         else{state.recovery=false;openPasswordReset();$('#recoveryError').textContent='Reset link expired. Request a new reset email.';}
       }

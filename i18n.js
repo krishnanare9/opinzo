@@ -14,6 +14,45 @@
     mr:'Opinzo — विचार करा. अंदाज वर्तवा. सिद्ध करा.'
   };
   const dictionaryRows = [
+    // Official sample questions supplied by OPINZO itself.
+    // Third-party/user-authored questions are never machine-translated.
+    ['Will Bitcoin close above $100,000 at the end of this month?','क्या इस महीने के अंत में बिटकॉइन $100,000 से ऊपर बंद होगा?','या महिन्याच्या शेवटी बिटकॉइन $100,000 च्या वर बंद होईल का?'],
+    ['Will Ethereum close above $4,000 at the end of this month?','क्या इस महीने के अंत में इथेरियम $4,000 से ऊपर बंद होगा?','या महिन्याच्या शेवटी इथेरियम $4,000 च्या वर बंद होईल का?'],
+    ["Will India win its next completed men's ODI match?",'क्या भारत अपना अगला पूरा खेला गया पुरुष वनडे मैच जीतेगा?','भारत पुढचा पूर्ण झालेला पुरुषांचा एकदिवसीय सामना जिंकेल का?'],
+    ['Will Apple announce a new Mac model before the end of this month?','क्या ऐपल इस महीने के अंत से पहले नया Mac मॉडल घोषित करेगा?','अॅपल या महिनाअखेरीस नवीन Mac मॉडेल जाहीर करेल का?'],
+    ['Will the NIFTY 50 finish above 28,000 at month end?','क्या महीने के अंत में NIFTY 50, 28,000 से ऊपर बंद होगा?','महिनाअखेरीस NIFTY 50, 28,000 च्या वर बंद होईल का?'],
+    ['Will the US Federal Reserve cut rates at its next FOMC decision?','क्या अमेरिकी फेडरल रिज़र्व अगली FOMC बैठक में दरें घटाएगा?','अमेरिकन फेडरल रिझर्व्ह पुढील FOMC निर्णयात व्याजदर कमी करेल का?'],
+    ['Will Solana close above $200 at the end of this month?','क्या इस महीने के अंत में सोलाना $200 से ऊपर बंद होगा?','या महिन्याच्या शेवटी सोलाना $200 च्या वर बंद होईल का?'],
+    ['Will gold close above $4,500 per troy ounce at month end?','क्या महीने के अंत में सोना $4,500 प्रति ट्रॉय औंस से ऊपर बंद होगा?','महिनाअखेरीस सोने प्रति ट्रॉय औंस $4,500 च्या वर बंद होईल का?'],
+    ['Illustrative market. Resolve using the BTC/USD UTC daily close from a clearly declared exchange.','यह उदाहरण है। नतीजा पहले बताए गए एक्सचेंज के BTC/USD UTC दैनिक बंद भाव से तय होगा।','हा नमुना बाजार आहे. निकाल आधी जाहीर केलेल्या एक्सचेंजच्या BTC/USD UTC दैनिक बंद भावावर ठरेल.'],
+    ['Illustrative market. Use the ETH/USD UTC close on the final calendar day.','यह उदाहरण है। अंतिम कैलेंडर दिन के ETH/USD UTC बंद भाव का उपयोग होगा।','हा नमुना बाजार आहे. शेवटच्या दिवसाच्या ETH/USD UTC बंद भावाचा वापर होईल.'],
+    ['Illustrative market. No-result or abandoned fixtures must be refunded manually in a real market.','यह उदाहरण है। वास्तविक मार्केट में बिना नतीजे वाले या रद्द मैच पर मैनुअल रिफंड देना होगा।','हा नमुना बाजार आहे. खऱ्या बाजारात निकाल नसलेल्या किंवा रद्द सामन्यांसाठी गुण परत करावे लागतील.'],
+    ['Illustrative market. Announcement must appear on Apple Newsroom before 23:59 UTC on the final day.','यह उदाहरण है। घोषणा आखिरी दिन 23:59 UTC से पहले Apple Newsroom पर प्रकाशित होनी चाहिए।','हा नमुना बाजार आहे. शेवटच्या दिवशी 23:59 UTC पूर्वी घोषणा Apple Newsroom वर प्रसिद्ध व्हावी.'],
+    ['Illustrative market. Final official closing level at the last trading session of the month.','यह उदाहरण है। महीने के आखिरी ट्रेडिंग सत्र का आधिकारिक बंद स्तर लागू होगा।','हा नमुना बाजार आहे. महिन्याच्या शेवटच्या ट्रेडिंग सत्रातील अधिकृत बंद पातळी लागू होईल.'],
+    ["Illustrative market. Use the Federal Reserve's official rate announcement.",'यह उदाहरण है। फेडरल रिज़र्व की आधिकारिक दर घोषणा लागू होगी।','हा नमुना बाजार आहे. फेडरल रिझर्व्हची अधिकृत व्याजदर घोषणा लागू होईल.'],
+    ["Illustrative market. Use a declared exchange's SOL/USD UTC day-close.",'यह उदाहरण है। घोषित एक्सचेंज के SOL/USD UTC दैनिक बंद भाव का उपयोग होगा।','हा नमुना बाजार आहे. जाहीर केलेल्या एक्सचेंजच्या SOL/USD UTC दैनिक बंद भावाचा वापर होईल.'],
+    ['Illustrative market. Settlement benchmark must be declared before accepting predictions.','यह उदाहरण है। अनुमान स्वीकार करने से पहले नतीजे का बेंचमार्क घोषित करना होगा।','हा नमुना बाजार आहे. अंदाज स्वीकारण्याआधी निकालाचा मापदंड जाहीर करणे आवश्यक आहे.'],
+    ['Welcome bonus','स्वागत बोनस','स्वागत बोनस'],
+    ['Prediction outcome settled.','अनुमान का नतीजा दर्ज हो गया।','अंदाजाचा निकाल जाहीर झाला.'],
+    ['Market created successfully.','मार्केट बन गया।','बाजार तयार झाला.'],
+    ['Signed in successfully.','लॉग इन सफल रहा।','लॉग इन यशस्वी.'],
+    ['Signed out.','लॉग आउट हो गया।','लॉग आउट झाले.'],
+    ['Password updated successfully.','पासवर्ड सफलतापूर्वक बदला।','पासवर्ड यशस्वीपणे बदलला.'],
+    ['Check your email to confirm your account.','खाता पुष्टि करने के लिए ईमेल देखें।','खाते निश्चित करण्यासाठी ईमेल तपासा.'],
+    ['Cricket predictions closed.','क्रिकेट अनुमान बंद हो गए।','क्रिकेट अंदाज बंद झाले.'],
+    ['Cricket prediction published.','क्रिकेट अनुमान प्रकाशित हो गया।','क्रिकेट अंदाज प्रकाशित झाला.'],
+    ['No current scores returned.','अभी कोई स्कोर नहीं मिला।','सध्याचे स्कोअर उपलब्ध नाहीत.'],
+    ['Score request timed out. Please retry.','स्कोर लाने में देर हुई। फिर कोशिश करें।','स्कोअर मिळण्यास विलंब झाला. पुन्हा प्रयत्न करा.'],
+    ['Scores temporarily unavailable.','स्कोर अभी उपलब्ध नहीं हैं।','स्कोअर सध्या उपलब्ध नाहीत.'],
+    ['This prediction is closed.','यह अनुमान बंद है।','हा अंदाज बंद झाला आहे.'],
+    ['You already made a prediction here.','आप यहाँ पहले ही अनुमान लगा चुके हैं।','तुम्ही येथे आधीच अंदाज नोंदवला आहे.'],
+    ['Sign in before placing a prediction.','अनुमान लगाने से पहले लॉग इन करें।','अंदाज नोंदवण्यापूर्वी लॉग इन करा.'],
+    ['Your account profile is not ready. Please refresh.','आपका खाता तैयार नहीं है। पेज रीफ़्रेश करें।','तुमचे खाते तयार नाही. पान रिफ्रेश करा.'],
+    ['Prediction is no longer available.','यह अनुमान अब उपलब्ध नहीं है।','हा अंदाज आता उपलब्ध नाही.'],
+    ['Use at least 8 characters.','कम से कम 8 अक्षर डालें।','किमान 8 अक्षरे द्या.'],
+    ['Passwords do not match.','दोनों पासवर्ड मेल नहीं खाते।','दोन्ही पासवर्ड जुळत नाहीत.'],
+    ['Reset link expired. Request a new reset email.','रीसेट लिंक की समय-सीमा खत्म हो गई। नई ईमेल माँगें।','रीसेट लिंकची मुदत संपली. नवीन ईमेल मागवा.'],
+    ['Demo reset.','डेमो रीसेट हो गया।','डेमो रीसेट झाला.'],
     ['EXPLORE','देखें','शोधा'],
     ['Discover','खोजें','शोधा'],
     ['Trending','ट्रेंडिंग','लोकप्रिय'],
@@ -343,6 +382,10 @@
       const translated=translateKey(trailingArrow[1].trim());
       if(translated!==trailingArrow[1].trim()) return translated+' ↗';
     }
+    if((m=key.match(/^(YES|NO) prediction placed · ([\d,]+) points staked$/))) return (m[1]==='YES'?yes:no)+(language==='hi'?' अनुमान दर्ज · ':' अंदाज नोंदवला · ')+m[2]+(language==='hi'?' पॉइंट्स लगाए':' गुण लावले');
+    if((m=key.match(/^(\d+) day left$/))) return m[1]+(language==='hi'?' दिन बाकी':' दिवस बाकी');
+    if((m=key.match(/^\d+ open$/)))return key.replace(' open',language==='hi'?' खुले':' सुरू');
+    if((m=key.match(/^(.+) · Balance after: ([\d,]+)$/)))return translateKey(m[1])+' · '+(language==='hi'?'बाद का बैलेंस: ':'नंतरची शिल्लक: ')+m[2];
     return key;
   }
 

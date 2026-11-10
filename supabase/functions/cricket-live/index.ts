@@ -55,18 +55,34 @@ async function cacheRpc(name,args){
  if(!response.ok)throw Error("Shared feed cache unavailable");
  return response.json();
 }
+const FEED_ERRORS={
+ AUTH:"CricketData API key was rejected. Recheck CRICKET_DATA_API_KEY in Supabase Secrets.",
+ QUOTA:"CricketData request quota is exhausted. Check API usage in your CricketData dashboard.",
+ RESPONSE:"CricketData rejected the request. Check key activation and currentMatches access in its API playground.",
+ FORMAT:"CricketData returned an unexpected response format.",
+ NETWORK:"CricketData request failed or timed out.",
+ STORE:"CricketData responded, but the shared feed cache could not save it. Check the SQL migration.",
+ WAIT:"The first CricketData attempt failed or is still running. Retry after the shared 15-minute interval."
+};
+function providerFailure(raw){
+ const hint=[raw?.reason,raw?.error,raw?.message,raw?.info?.reason].filter(v=>typeof v==="string").join(" ");
+ return /quota|limit|exceed|hits|credits/i.test(hint)?"QUOTA":/key|unauthori|authentic|invalid.*token/i.test(hint)?"AUTH":"RESPONSE";
+}
 async function cricketData(key){
  const cacheKey="cricketdata-current-v1";
  const slot=await cacheRpc("cricket_feed_claim",{p_key:cacheKey,p_refresh_seconds:900});
- let data=slot.data,failed=false;
+ let data=slot.data,failed=false,failureCode=data?.failureCode||"WAIT",stage="NETWORK";
  if(slot.fetch){
+  failureCode="WAIT";
   try{
    const response=await fetch("https://api.cricapi.com/v1/currentMatches?"+new URLSearchParams({apikey:key,offset:"0"}),{signal:AbortSignal.timeout(10000)});
-   if(!response.ok)throw Error("Provider unavailable");
+   if(!response.ok){failureCode=response.status===401||response.status===403?"AUTH":response.status===429?"QUOTA":"NETWORK";throw Error("Provider unavailable");}
+   stage="FORMAT";
    const body=await response.text();
    if(body.length>1000000)throw Error("Invalid provider response");
    const raw=JSON.parse(body);
-   if(raw.status!=="success"||!Array.isArray(raw.data))throw Error("Provider request failed");
+   if(raw.status!=="success"){failureCode=providerFailure(raw);throw Error("Provider request failed");}
+   if(!Array.isArray(raw.data))throw Error("Invalid provider data");
    const now=new Date().toISOString();
    const matches=[...new Map(raw.data.map(v=>normalizeMatch(v,now)).filter(Boolean).map(v=>[v.id,v])).values()];
    const total=raw.info?.totalRows;
@@ -74,17 +90,25 @@ async function cricketData(key){
    data={provider:"cricketdata",source:"CricketData",sourceUrl:"https://cricketdata.org/cricket-data-formats/matches",
     sourcePublishedAt:now,sourceTimestampKind:"retrieved",retrievedAt:now,refreshSeconds:900,
     coverage:complete?"complete":"partial",matches};
+   stage="STORE";
    await cacheRpc("cricket_feed_store",{p_key:cacheKey,p_claim:slot.claim,p_data:data});
-  }catch{failed=true;}
+  }catch{
+   failed=true;
+   if(failureCode==="WAIT")failureCode=stage;
+   if(!slot.data||slot.data.failureCode){
+    data={matches:[],failureCode};
+    try{await cacheRpc("cricket_feed_store",{p_key:cacheKey,p_claim:slot.claim,p_data:data});}catch{failureCode="STORE";}
+   }
+  }
  }
- if(!data)return reply({error:"CricketData feed is not ready. Check the feed migration, secret and provider quota; retry after 15 minutes."},503);
+ if(!data||data.failureCode)return reply({error:(FEED_ERRORS[failureCode]||FEED_ERRORS.RESPONSE)+" Retry after 15 minutes; refresh does not bypass the quota cache.",code:failureCode},503);
  const age=Date.now()-Date.parse(data.retrievedAt||"");
  return reply({...data,stale:failed||!Number.isFinite(age)||age>180000,providerUnavailable:failed});
 }
 const authenticated=withSupabase({auth:["publishable"]},async(req)=>{
  if(req.method!=="GET")return reply({error:"Method not allowed"},405);
  const key=Deno.env.get("CRICKET_DATA_API_KEY");
- if(key){try{return await cricketData(key);}catch{return reply({error:"CricketData setup unavailable. Apply the feed SQL migration before deploying this function."},503);}}
+ if(key){try{return await cricketData(key.trim());}catch{return reply({error:"CricketData setup unavailable. Apply the feed SQL migration before deploying this function."},503);}}
  let failed=false;
  if(!cached||Date.now()-cachedAt>60000){
   try{if(!pending)pending=refresh().finally(()=>{pending=null;});await pending;}catch{failed=true;}

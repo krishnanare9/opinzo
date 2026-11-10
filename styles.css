@@ -133,3 +133,4 @@ body.sports-mode{--bg:#0b100d;--text:#f0f5ed;--muted:#9aa992;--purple:#cceb66;--
 @media(prefers-reduced-motion:no-preference){.cricket-lobby-hero{animation:surface-appear .4s ease-out backwards}.match-score-tiles{animation:surface-appear .3s ease-out backwards}}
 @media(prefers-reduced-motion:reduce){.cricket-lobby-cta:hover{transform:none}}
 html:lang(hi) .cricket-lobby-copy h1,html:lang(mr) .cricket-lobby-copy h1{line-height:1.3;letter-spacing:0}html:lang(hi) .match-team-name,html:lang(mr) .match-team-name{line-height:1.9}
+.nav-link[hidden]{display:none!important}.sports-mode #mainNav{margin-bottom:22px}.sports-mode .nav-section-label{margin-top:6px}.sports-mode .sidebar-mini{line-height:1.8}

@@ -10,10 +10,9 @@
   const isLive = isConfigured && Boolean(window.supabase?.createClient);
   const sb = isLive ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey) : null;
   const DEMO_KEY = 'opinzo-demo-v2';
-  const CATEGORIES = ['All', 'Crypto', 'Sports', 'Technology', 'Markets', 'World'];
-  const ICONS = {Crypto:'₿', Sports:'⚽', Technology:'✦', Markets:'▥', World:'◎'};
+  const ICONS = {Sports:'🏏'};
   const state = {
-    mode: isLive ? 'live' : 'demo', view:'explore', category:'All', query:'', sort:'popular',
+    mode: isLive ? 'live' : 'demo', view:'cricket', category:'All', query:'', sort:'popular',
     markets:[], predictions:[], ledger:[], leaderboard:[], profile:null, user:null,
     admin:false, modal:null, voteChoice:'yes', stake:25, authTab:'signin', busy:false,
     demo:null, error:'', recovery:recoveryArrival, cricketMatchId:null, cricketTab:'all', cricket:{data:null,loading:false,error:'',fetchedAt:0,lastAttempt:0,onlyOpen:false,onlyLive:false,kind:'all'}
@@ -26,16 +25,7 @@
   const daysTo = (v) => { const d = Math.ceil((new Date(v) - Date.now()) / 86400000); return new Date(v).getTime() <= Date.now() ? 'Closed' : d > 1 ? `${d} days left` : d === 1 ? '1 day left' : d === 0 ? 'Closes today' : 'Closed'; };
   const id = () => (window.crypto?.randomUUID?.() || `d${Date.now()}${Math.random().toString(36).slice(2)}`);
   const safeLink = (u) => /^https:\/\/[^\s]+$/i.test(String(u||'')) ? esc(u) : '';
-  const demoMarketSeeds = [
-    {id:'demo-btc',question:'Will Bitcoin close above $100,000 at the end of this month?',category:'Crypto',description:'Illustrative market. Resolve using the BTC/USD UTC daily close from a clearly declared exchange.',yes_votes:213,no_votes:149,dayOffset:19},
-    {id:'demo-eth',question:'Will Ethereum close above $4,000 at the end of this month?',category:'Crypto',description:'Illustrative market. Use the ETH/USD UTC close on the final calendar day.',yes_votes:176,no_votes:189,dayOffset:23},
-    {id:'demo-sports',question:'Will India win its next completed men\'s ODI match?',category:'Sports',description:'Illustrative market. No-result or abandoned fixtures must be refunded manually in a real market.',yes_votes:348,no_votes:138,dayOffset:12},
-    {id:'demo-ai',question:'Will Apple announce a new Mac model before the end of this month?',category:'Technology',description:'Illustrative market. Announcement must appear on Apple Newsroom before 23:59 UTC on the final day.',yes_votes:165,no_votes:122,dayOffset:17},
-    {id:'demo-nifty',question:'Will the NIFTY 50 finish above 28,000 at month end?',category:'Markets',description:'Illustrative market. Final official closing level at the last trading session of the month.',yes_votes:291,no_votes:174,dayOffset:25},
-    {id:'demo-fed',question:'Will the US Federal Reserve cut rates at its next FOMC decision?',category:'World',description:'Illustrative market. Use the Federal Reserve\'s official rate announcement.',yes_votes:136,no_votes:203,dayOffset:21},
-    {id:'demo-sol',question:'Will Solana close above $200 at the end of this month?',category:'Crypto',description:'Illustrative market. Use a declared exchange\'s SOL/USD UTC day-close.',yes_votes:215,no_votes:182,dayOffset:29},
-    {id:'demo-gold',question:'Will gold close above $4,500 per troy ounce at month end?',category:'Markets',description:'Illustrative market. Settlement benchmark must be declared before accepting predictions.',yes_votes:102,no_votes:92,dayOffset:27}
-  ];
+  const demoMarketSeeds = [];
   function seedDemo() {
     const monthEnd = new Date(); monthEnd.setUTCMonth(monthEnd.getUTCMonth()+1,0); monthEnd.setUTCHours(23,59,59,0);
     const markets = demoMarketSeeds.map((m) => {
@@ -61,9 +51,9 @@
   }
   function setDemoState() {
     const d=state.demo;
-    state.markets=d.markets;
+    state.markets=d.markets.filter(m=>m.cricket_match_id&&m.cricket_kind);
     state.profile=d.profile;
-    state.predictions=d.predictions;
+    state.predictions=d.predictions.filter(p=>state.markets.some(m=>m.id===p.market_id));
     state.ledger=d.ledger.slice().reverse();
     const sample=[['Mira_99',32,42,1120],['AstroK',26,37,985],['InfoNinja',21,31,865],['NovaQueen',17,28,790],['DataWiz',11,21,720]];
     const mine=getStats();
@@ -72,11 +62,11 @@
   async function loadLive() {
     if(!sb) return;
     const [marketResult,leaderResult]=await Promise.all([
-      sb.from('markets').select('id,question,description,category,ends_at,created_at,status,outcome,resolution_source,yes_votes,no_votes,cricket_match_id,cricket_kind,cricket_subject,cricket_line,cricket_period').order('created_at',{ascending:false}).limit(120),
+      sb.from('markets').select('id,question,description,category,ends_at,created_at,status,outcome,resolution_source,yes_votes,no_votes,cricket_match_id,cricket_kind,cricket_subject,cricket_line,cricket_period').not('cricket_match_id','is',null).order('created_at',{ascending:false}).limit(120),
       sb.rpc('get_leaderboard')
     ]);
     const {data:markets,error:marketError}=marketResult;
-    if(marketError) {state.error=marketError.message;state.markets=[];} else {state.error='';state.markets=markets||[];}
+    if(marketError) {state.error=marketError.message;state.markets=[];} else {state.error='';state.markets=(markets||[]).filter(m=>m.cricket_match_id&&m.cricket_kind);}
     const {data:leaders,error:leaderError}=leaderResult;
     state.leaderboard=leaderError?[]:(leaders||[]);
     if(state.user) {
@@ -86,7 +76,7 @@
         sb.from('coin_ledger').select('id,amount,reason,market_id,balance_after,created_at').order('created_at',{ascending:false}).limit(100),
         sb.rpc('is_admin')
       ]);
-      state.profile=p.data||null; state.predictions=x.data||[];state.ledger=l.data||[];state.admin=Boolean(a.data);
+      state.profile=p.data||null; state.predictions=(x.data||[]).filter(p=>state.markets.some(m=>m.id===p.market_id));state.ledger=l.data||[];state.admin=Boolean(a.data);
       if(p.error) state.error=`Account profile unavailable: ${p.error.message}`;
     } else {state.profile=null;state.predictions=[];state.ledger=[];state.admin=false;}
     render();
@@ -96,39 +86,12 @@
   function marketPerc(m) {const yes=Number(m.yes_votes||0),no=Number(m.no_votes||0); return yes+no ? Math.round(100*yes/(yes+no)):50;}
   function getMarket(marketId) {return state.markets.find(m=>String(m.id)===String(marketId));}
   function statCard(label,value,note,symbol) {return `<article class="stat-card"><div class="stat-card-top"><span>${esc(label)}</span><span class="stat-card-icon">${symbol}</span></div><strong>${value}</strong><small>${note}</small></article>`;}
-  function hero() {return `<section class="hero premium-hero"><img class="hero-art" src="assets/opinzo-hero-v1.webp" alt="" aria-hidden="true" width="1440" height="720" fetchpriority="high"><div class="hero-content"><span class="hero-kicker">✦&nbsp; THE FUTURE IS AN OPINION</span><h2>Think it. <span>Predict it.</span><br>Prove it.</h2><p>Turn your knowledge into a track record. Pick a side, earn virtual points, and rise on the leaderboard.</p><button class="btn-primary" data-action="scrollMarkets" type="button">Explore markets &nbsp;↗</button></div><div class="hero-floating"><span>Your decisions matter</span><strong>↑ Think ahead</strong></div></section>`;}
   function modeNotice() {return state.mode==='demo' ? `<div class="info-banner"><span class="info-symbol">ⓘ</span><div><strong>Preview mode is active.</strong><p>Predictions, points and the sample leaderboard are stored or simulated in this browser only. No real users, live prices, or real rewards. Connect Supabase to launch online accounts.</p></div></div>` : '' ;}
-  function marketCard(m) {
-    const s=marketStatus(m),pct=marketPerc(m),choice=ownPick(m.id),total=Number(m.yes_votes||0)+Number(m.no_votes||0);
-    const cls=String(m.category||'').toLowerCase().replace(/[^a-z]/g,'');
-    return `<article class="market-card" data-market-card="${esc(m.id)}"><div class="market-card-top"><div class="market-category"><span class="category-icon ${cls}">${ICONS[m.category]||'◉'}</span>${esc(m.category)}</div><span class="market-status ${s}">${s==='open'?'● OPEN':s==='resolved'?'● RESOLVED':s==='void'?'● VOID':'● CLOSED'}</span></div><h3>${esc(m.question)}</h3><div class="bar-labels"><span class="yes">YES ${pct}%</span><span class="no">NO ${100-pct}%</span></div><div class="prob-bar" role="img" aria-label="Community picks: ${pct} percent yes, ${100-pct} percent no"><div class="yes-fill" style="width:${pct}%"></div></div><div class="market-meta"><span>${num(total)} community picks${state.mode==='demo'?' · sample':''}</span><span>${s==='resolved'?`Result: ${String(m.outcome||'').toUpperCase()}`:s==='void'?'Refunded':daysTo(m.ends_at)}</span></div><div class="market-actions">${s==='open'&&!choice?`<button class="btn-yes" type="button" data-action="vote" data-choice="yes" data-id="${esc(m.id)}">↗ ${esc(cricketChoice(m,'yes'))}</button><button class="btn-no" type="button" data-action="vote" data-choice="no" data-id="${esc(m.id)}">↘ ${esc(cricketChoice(m,'no'))}</button>`:`<button class="btn-outline btn-small full-action" type="button" data-action="detail" data-id="${esc(m.id)}">${choice?`✓ Your pick: ${esc(choice.choice).toUpperCase()}`:'View result / details'} &nbsp;→</button>`}</div></article>`;
-  }
-  function filteredMarkets() {
-    let markets=[...state.markets];
-    if(state.category!=='All')markets=markets.filter(m=>m.category===state.category);
-    if(state.query.trim()) {const q=state.query.trim().toLowerCase();markets=markets.filter(m=>(m.question+' '+m.category+' '+(m.description||'')).toLowerCase().includes(q));}
-    if(state.view==='trending'||state.sort==='popular')markets.sort((a,b)=>Number(b.yes_votes||0)+Number(b.no_votes||0)-Number(a.yes_votes||0)-Number(a.no_votes||0));
-    if(state.view!=='trending'&&state.sort==='ending')markets.sort((a,b)=>new Date(a.ends_at)-new Date(b.ends_at));
-    if(state.view!=='trending'&&state.sort==='newest')markets.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-    return markets;
-  }
-  function marketList() {
-    const markets=filteredMarkets();
-    const chips=CATEGORIES.map(c=>`<button type="button" class="chip ${state.category===c?'active':''}" data-category="${c}">${c}</button>`).join('');
-    return `${state.category==='Sports'?cricketPanel():''}<section id="marketsSection"><div class="section-heading"><div><h2>${state.view==='trending'?'Trending predictions':'Explore predictions'}</h2><p>Pick a side. Build your accuracy. Community pick % is not a probability forecast.</p></div><span class="count-badge">${markets.length} Markets</span></div><div class="filters"><div class="chip-group">${chips}</div><select id="sortSelect" class="filter-select" aria-label="Sort predictions"><option value="popular" ${state.sort==='popular'?'selected':''}>Most popular</option><option value="newest" ${state.sort==='newest'?'selected':''}>Newest</option><option value="ending" ${state.sort==='ending'?'selected':''}>Closing soon</option></select></div><div class="market-grid">${markets.length ? markets.map(marketCard).join(''):`<div class="empty-state empty-grid"><div class="empty-icon">⌕</div><h3>No predictions found</h3><p>Try another category or search phrase.</p><button class="btn-outline" data-action="resetFilters" type="button">Clear filters</button></div>`}</div></section>`;
-  }
-  function exploreView() {
-    const st=getStats();
-    const balance=state.profile?num(state.profile.coin_balance):'—';
-    const name=state.profile?.username?.split(' ')[0]||'there';
-    return `<div class="greeting"><div><h1>Hey, ${esc(name)} <span aria-hidden="true">👋</span></h1><p>Ready to put your perspective to the test?</p></div><span class="small-clock">${new Date().toLocaleDateString(window.OPINZO_I18N?.dateLocale || 'en-IN',{day:'numeric',month:'short',year:'numeric'})}</span></div>${modeNotice()}${hero()}<section class="stat-grid">${statCard('Your balance',balance,'Free virtual points','◈')}${statCard('Active predictions',state.profile?st.active:'—','Waiting for results','▤')}${statCard('Prediction accuracy',state.profile?st.accuracy+'%':'—',`${st.settled} resolved picks`,'⌁')}</section>${marketList()}`;
-  }
-  function trendingView() {return `<div class="eyebrow">THE COMMUNITY</div><h1 class="page-title">What's trending</h1><p class="page-subtitle">The most-picked prediction questions in our community.</p>${modeNotice()}${marketList()}`;}
   function resultBadge(p) {return p.status==='won'?'<span class="mini-tag yes">✓ WON</span>':p.status==='lost'?'<span class="mini-tag no">✕ LOST</span>':p.status==='refunded'?'<span class="mini-tag">↩ REFUNDED</span>':'<span class="mini-tag">◷ PENDING</span>';}
   function portfolioView() {
     const stats=getStats();
     const entries=state.predictions;
-    return `<div class="eyebrow">YOUR TRACK RECORD</div><h1 class="page-title">My predictions</h1><p class="page-subtitle">All your opinions, outcomes and virtual point gains in one place.</p>${!state.profile?signinEmpty():`<section class="stat-grid">${statCard('Total picks',stats.total,'Since joining','▤')}${statCard('Correct picks',stats.wins,'Resolved wins','✓')}${statCard('Accuracy',stats.accuracy+'%',`${stats.settled} resolved picks`,'⌁')}</section><div class="wide-panel"><h3>Prediction history</h3>${entries.length?entries.map(p=>{const m=getMarket(p.market_id);return `<div class="prediction-row"><span class="history-icon">${ICONS[m?.category]||'◉'}</span><div class="history-info"><div class="history-title">${esc(m?.question||'Market #'+String(p.market_id).slice(0,8))}</div><div class="history-sub">Picked ${esc(p.choice).toUpperCase()} · ${num(p.stake)} points staked · ${niceTime(p.created_at)}</div></div><div style="text-align:right">${resultBadge(p)}<div class="history-sub" style="margin-top:5px">${p.status==='won'?`+${num(p.payout||0)} paid`:p.status==='lost'?'No payout':p.status==='refunded'?'Stake returned':'Awaiting result'}</div></div></div>`;}).join(''):`<div class="empty-state"><div class="empty-icon">◎</div><h3>No predictions yet</h3><p>Explore questions and make your first pick.</p><button class="btn-primary" data-view="explore" type="button">Explore markets</button></div>`}</div>`}`;
+    return `<div class="eyebrow">YOUR TRACK RECORD</div><h1 class="page-title">My predictions</h1><p class="page-subtitle">All your opinions, outcomes and virtual point gains in one place.</p>${!state.profile?signinEmpty():`<section class="stat-grid">${statCard('Total picks',stats.total,'Since joining','▤')}${statCard('Correct picks',stats.wins,'Resolved wins','✓')}${statCard('Accuracy',stats.accuracy+'%',`${stats.settled} resolved picks`,'⌁')}</section><div class="wide-panel"><h3>Prediction history</h3>${entries.length?entries.map(p=>{const m=getMarket(p.market_id);return `<div class="prediction-row"><span class="history-icon">${ICONS[m?.category]||'◉'}</span><div class="history-info"><div class="history-title">${esc(m?.question||'Market #'+String(p.market_id).slice(0,8))}</div><div class="history-sub">Picked ${esc(p.choice).toUpperCase()} · ${num(p.stake)} points staked · ${niceTime(p.created_at)}</div></div><div style="text-align:right">${resultBadge(p)}<div class="history-sub" style="margin-top:5px">${p.status==='won'?`+${num(p.payout||0)} paid`:p.status==='lost'?'No payout':p.status==='refunded'?'Stake returned':'Awaiting result'}</div></div></div>`;}).join(''):`<div class="empty-state"><div class="empty-icon">◎</div><h3>No predictions yet</h3><p>Explore questions and make your first pick.</p><button class="btn-primary" data-view="cricket" type="button">Open cricket matches</button></div>`}</div>`}`;
   }
   function signinEmpty() {return `<div class="empty-state"><div class="empty-icon">♙</div><h3>Sign in to get started</h3><p>Create your free account to track predictions and virtual points.</p><button class="btn-primary" type="button" data-action="auth">Sign in / Create account</button></div>`;}
   function walletView() {
@@ -141,7 +104,7 @@
   }
   function adminView() {
     if(!state.admin && state.mode!=='demo') return '<div class="empty-state"><h3>Admin access required</h3><p>This area is not available to your account.</p></div>';
-    return `<div class="eyebrow">${state.mode==='demo'?'LOCAL SANDBOX':'ADMIN AREA'}</div><h1 class="page-title">Market management</h1><p class="page-subtitle">${state.mode==='demo'?'Simulated outcomes for browser testing only.':'Only approved admins can create and resolve markets through secure database functions.'}</p>${modeNotice()}<div class="wide-panel"><h3>Create a new ${state.mode==='demo'?'demo ':''}market</h3><form id="createMarketForm" class="admin-form"><div class="field"><label for="adminQuestion">Question (clear, verifiable outcome)</label><input id="adminQuestion" name="question" maxlength="220" minlength="15" required placeholder="Will XYZ happen by a specific date?"></div><div class="field"><label for="adminDescription">Settlement criteria</label><textarea id="adminDescription" name="description" maxlength="1000" required placeholder="Exact source, measurement, deadline, tie / cancellation policy..."></textarea></div><div class="two-col"><div class="field"><label for="adminCategory">Category</label><select name="category" id="adminCategory">${CATEGORIES.slice(1).map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label for="adminEnd">Closes at (your local time)</label><input name="ends_at" id="adminEnd" type="datetime-local" required></div></div><button class="btn-primary" ${state.busy?'disabled':''} type="submit">Create market</button></form></div><div class="wide-panel"><h3>Settle markets</h3><p class="subtle">${state.mode==='demo'?'Demo outcomes are arbitrary simulations.':'Real markets can only be settled after their closing time. Verify an authoritative source first.'}</p>${state.markets.filter(m=>!['resolved','void'].includes(marketStatus(m))).length?state.markets.filter(m=>!['resolved','void'].includes(marketStatus(m))).map(m=>`<div class="admin-market"><div class="history-info"><div class="history-title">${esc(m.question)}</div><div class="history-sub">${marketStatus(m).toUpperCase()} · Closes ${niceTime(m.ends_at)}</div></div>${m.cricket_match_id&&marketStatus(m)==='open'?`<button type="button" class="btn-outline btn-small" data-action="closeCricketNow" data-id="${esc(m.id)}">Close predictions now</button>`:''}<button type="button" class="btn-outline btn-small" data-action="settle" data-id="${esc(m.id)}" ${state.mode==='live'&&marketStatus(m)==='open'?'disabled title="Market not closed"':''}>Resolve</button></div>`).join(''):'<p class="subtle">No unresolved markets.</p>'}</div>${state.mode==='demo'?'<button class="btn-outline btn-small" data-action="resetDemo" type="button">Reset browser demo (erase local picks)</button>':''}`;
+    return `<div class="eyebrow">${state.mode==='demo'?'LOCAL SANDBOX':'ADMIN AREA'}</div><h1 class="page-title">Cricket market management</h1><p class="page-subtitle">${state.mode==='demo'?'Simulated outcomes for browser testing only.':'Only approved admins can create and resolve markets through secure database functions.'}</p>${modeNotice()}<div class="wide-panel"><h3>Cricket market management</h3><p class="subtle">Open a cricket match and use Add market to configure team, session or player selections.</p><button class="btn-primary" type="button" data-view="cricket">Open cricket matches →</button></div><div class="wide-panel"><h3>Settle markets</h3><p class="subtle">${state.mode==='demo'?'Demo outcomes are arbitrary simulations.':'Real markets can only be settled after their closing time. Verify an authoritative source first.'}</p>${state.markets.filter(m=>!['resolved','void'].includes(marketStatus(m))).length?state.markets.filter(m=>!['resolved','void'].includes(marketStatus(m))).map(m=>`<div class="admin-market"><div class="history-info"><div class="history-title">${esc(cricketMarketLabel(m))}</div><div class="history-sub">${marketStatus(m).toUpperCase()} · Closes ${niceTime(m.ends_at)}</div></div>${m.cricket_match_id&&marketStatus(m)==='open'?`<button type="button" class="btn-outline btn-small" data-action="closeCricketNow" data-id="${esc(m.id)}">Close predictions now</button>`:''}<button type="button" class="btn-outline btn-small" data-action="settle" data-id="${esc(m.id)}" ${state.mode==='live'&&marketStatus(m)==='open'?'disabled title="Market not closed"':''}>Resolve</button></div>`).join(''):'<p class="subtle">No unresolved markets.</p>'}</div>${state.mode==='demo'?'<button class="btn-outline btn-small" data-action="resetDemo" type="button">Reset browser demo (erase local picks)</button>':''}`;
   }
   const CRICKET_KINDS={match_winner:'Match winner',session_runs:'Session / over runs',innings_runs:'Innings total runs',wickets:'Team wickets',player_runs:'Player runs',player_wickets:'Player wickets'};
   function cricketMatch(matchId){return state.cricket.data?.matches.find(m=>String(m.id)===String(matchId));}
@@ -159,7 +122,8 @@
   function cricketRoute(hash){
     const match=/^cricket\/(\d{5,12})$/.exec(hash);
     if(match)return {view:'cricket',matchId:match[1]};
-    return ['explore','trending','portfolio','wallet','leaderboard','admin','cricket'].includes(hash)?{view:hash,matchId:null}:null;
+    if(['','explore','trending','sports','crypto','technology','markets','world'].includes(hash))return {view:'cricket',matchId:null};
+    return ['portfolio','wallet','leaderboard','admin','cricket'].includes(hash)?{view:hash,matchId:null}:null;
   }
   function isSingleOver(m){return m.cricket_kind==='session_runs'&&/^Single over:\s*\d+\b/i.test(m.cricket_period||'');}
   function cricketTabMarkets(markets,tab){
@@ -304,10 +268,10 @@
     finally{c.loading=false;const target=$('#cricketScores');if(target)target.innerHTML=cricketContent();}
   }
   function renderMain() {
-    document.body.classList.toggle('sports-mode',state.view==='cricket');
-    $('#searchInput').placeholder=state.view==='cricket'?'Search teams, players or markets…':'Search predictions, topics...';
+    document.body.classList.add('sports-mode');
+    $('#searchInput').placeholder='Search teams, players or markets…';
     document.body.classList.toggle('cricket-event-mode',state.view==='cricket'&&Boolean(state.cricketMatchId));
-    const output=state.view==='cricket'?cricketView():state.view==='portfolio'?portfolioView():state.view==='wallet'?walletView():state.view==='leaderboard'?leaderboardView():state.view==='admin'?adminView():state.view==='trending'?trendingView():exploreView();
+    const output=state.view==='cricket'?cricketView():state.view==='portfolio'?portfolioView():state.view==='wallet'?walletView():state.view==='leaderboard'?leaderboardView():state.view==='admin'?adminView():cricketView();
     $('#mainContent').innerHTML=(state.error?`<div class="info-banner"><span class="info-symbol">!</span><div><strong>Backend notice</strong><p>${esc(state.error)}</p></div></div>`:'')+output;
     if($('#cricketScores'))window.setTimeout(()=>loadCricket(false),0);
     const defaultTime=new Date(Date.now()+86400000);defaultTime.setMinutes(defaultTime.getMinutes()-defaultTime.getTimezoneOffset());
@@ -323,7 +287,7 @@
     $('#modePill').classList.toggle('live',state.mode==='live');
     $('#authButton').textContent=state.mode==='demo'?'Demo player':state.user?(state.profile?.username||'Account'):'Sign in';
     document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===state.view));
-    document.querySelectorAll('#categoryNav [data-category]').forEach(el=>el.classList.toggle('active',state.view==='explore'&&state.category===el.dataset.category));
+    $('#adminNav').hidden=!state.admin&&state.mode!=='demo';
   }
   function render() {renderMain();renderRail();renderTop();}
   function toast(message,type='') {const stack=$('#toastStack');const e=document.createElement('div');e.className='toast '+type;e.textContent=message;stack.append(e);window.setTimeout(()=>e.remove(),4300);}
@@ -401,7 +365,7 @@
     const m=getMarket(marketId);if(!m)return;
     state.modal={type:'settle',marketId};modal(`<div class="eyebrow">${state.mode==='demo'?'SIMULATE RESULT':'ADMIN RESOLUTION'}</div><h2>Resolve prediction</h2><p class="modal-intro">${esc(m.question)}</p><form id="settleForm" class="admin-form"><div class="field"><label for="settleOutcome">Verified outcome</label><select id="settleOutcome" name="outcome"><option value="yes">YES</option><option value="no">NO</option><option value="void">VOID (refund points)</option></select></div>${state.mode==='live'?'<div class="field"><label for="settleSource">Public source URL (https://)</label><input type="url" id="settleSource" name="source" required placeholder="https://official-source.example/result"></div>':'<div class="info-banner"><span class="info-symbol">ⓘ</span><div>This simulates a result locally. It does not verify an actual event.</div></div>'}<div class="form-error" id="settleError"></div><button class="btn-primary modal-submit" type="submit">${state.mode==='demo'?'Simulate outcome':'Confirm verified outcome'}</button></form>`);
   }
-  function navigate(view) {if(!['explore','trending','portfolio','wallet','leaderboard','admin','cricket'].includes(view))return;closeModal();state.cricketMatchId=null;state.view=view;state.category='All';state.query='';$('#searchInput').value='';$('#sidebar').classList.remove('mobile-open');window.location.hash=view;render();window.scrollTo({top:0,behavior:'auto'});}
+  function navigate(view) {const route=cricketRoute(view);if(!route)return;closeModal();state.cricketMatchId=route.matchId;state.view=route.view;state.category='All';state.query='';$('#searchInput').value='';$('#sidebar').classList.remove('mobile-open');window.location.hash=route.matchId?'cricket/'+route.matchId:route.view;render();window.scrollTo({top:0,behavior:'auto'});}
   function ledgerEntry(amount,reason,marketId=null) {return {id:id(),amount,reason,market_id:marketId,balance_after:state.demo.profile.coin_balance,created_at:new Date().toISOString()};}
   async function submitVote() {
     if(state.busy||state.modal?.type!=='vote')return;
@@ -446,17 +410,6 @@
       }
       closeModal();render();toast('Prediction outcome settled.','success');
     }catch(e){const n=$('#settleError');if(n)n.textContent=humanError(e);else toast(humanError(e),'error');}finally{state.busy=false;}
-  }
-  async function createMarket(form) {
-    if(state.busy)return;
-    const q=form.question.value.trim(),description=form.description.value.trim(),category=form.category.value,end=new Date(form.ends_at.value);
-    if(q.length<15||description.length<15||!CATEGORIES.includes(category)||isNaN(end.getTime())||end.getTime()<=Date.now()+300000){toast('Add a clear question, settlement criteria, and closing time at least 5 minutes from now.','error');return;}
-    state.busy=true;
-    try {
-      if(state.mode==='demo') {state.demo.markets.unshift({id:id(),question:q,description,category,ends_at:end.toISOString(),created_at:new Date().toISOString(),status:'open',outcome:null,resolution_source:null,yes_votes:0,no_votes:0});saveDemo();setDemoState();}
-      else {const {error}=await sb.rpc('admin_create_market',{p_question:q,p_description:description,p_category:category,p_ends_at:end.toISOString()});if(error)throw error;await loadLive();}
-      state.busy=false;toast('Market created successfully.','success');render();
-    }catch(e){toast(humanError(e),'error');}finally{state.busy=false;}
   }
   async function authSubmit(form) {
     if(!sb||state.busy)return;
@@ -507,7 +460,6 @@
   }
   document.addEventListener('click',e=>{
     const nav=e.target.closest('button[data-view]');if(nav){navigate(nav.dataset.view);return;}
-    const cat=e.target.closest('button[data-category]');if(cat){closeModal();state.cricketMatchId=null;state.view='explore';state.category=cat.dataset.category;render();$('#sidebar').classList.remove('mobile-open');return;}
     const a=e.target.closest('[data-action]');if(a){runAction(a);return;}
     if(e.target.matches('[data-backdrop]'))closeModal();
   });
@@ -516,19 +468,18 @@
     if(e.target.id==='passwordUpdateForm'){e.preventDefault();updatePassword(e.target);}
     if(e.target.id==='cricketCreateForm'){e.preventDefault();createCricketMarket(e.target);}
     if(e.target.id==='authForm'){e.preventDefault();authSubmit(e.target);}
-    if(e.target.id==='createMarketForm'){e.preventDefault();createMarket(e.target);}
     if(e.target.id==='settleForm'){e.preventDefault();settle(e.target);}
   });
   $('#sortSelect')?.addEventListener('change',e=>{state.sort=e.target.value;renderMain();});
   document.addEventListener('change',e=>{if(e.target.id==='cricketKind'&&e.target.value==='single_over')$('#cricketPeriod').value='Single over: 11 · 1st innings';if(e.target.id==='cricketKindFilter'){state.cricket.kind=e.target.value;renderMain();}if(e.target.id==='sortSelect'){state.sort=e.target.value;renderMain();}});
-  $('#searchInput').addEventListener('input',e=>{state.query=e.target.value;if(!['explore','trending','cricket'].includes(state.view))state.view='explore';renderMain();renderTop();});
+  $('#searchInput').addEventListener('input',e=>{state.query=e.target.value;if(state.view!=='cricket'){state.view='cricket';state.cricketMatchId=null;window.location.hash='cricket';}renderMain();renderTop();});
   $('#walletTop').addEventListener('click',()=>navigate('wallet'));
   $('#authButton').addEventListener('click',openAuth);
   $('#sideHow').addEventListener('click',openHow);
   $('#menuButton').addEventListener('click',()=>$('#sidebar').classList.toggle('mobile-open'));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)&&!$('#modalRoot .modal')){e.preventDefault();$('#searchInput').focus();}});
   window.addEventListener('hashchange',()=>{
-    const route=cricketRoute(window.location.hash.slice(1)||'explore');
+    const route=cricketRoute(window.location.hash.slice(1)||'cricket');
     if(route&&(route.view!==state.view||route.matchId!==state.cricketMatchId)){
       closeModal();state.view=route.view;state.cricketMatchId=route.matchId;state.cricketTab='all';state.category='All';state.query='';$('#searchInput').value='';render();
     }

@@ -9,11 +9,20 @@
   const SUPPORTED = ['en', 'hi', 'mr'];
   const LANG_TAG = {en:'en-IN',hi:'hi-IN',mr:'mr-IN'};
   const TITLES = {
-    en:'Opinzo — Think it. Predict it. Prove it.',
-    hi:'Opinzo — सोचो। अनुमान लगाओ। साबित करो।',
-    mr:'Opinzo — विचार करा. अंदाज वर्तवा. सिद्ध करा.'
+    en:'Opinzo Cricket — Match Centre',
+    hi:'Opinzo क्रिकेट — मैच सेंटर',
+    mr:'Opinzo क्रिकेट — सामना केंद्र'
   };
   const dictionaryRows = [
+    ["Cricket matches", "क्रिकेट मैच", "क्रिकेट सामने"],
+    ["🏏 Cricket matches", "🏏 क्रिकेट मैच", "🏏 क्रिकेट सामने"],
+    ["Cricket admin", "क्रिकेट एडमिन", "क्रिकेट प्रशासक"],
+    ["Cricket navigation", "क्रिकेट नेविगेशन", "क्रिकेट नेव्हिगेशन"],
+    ["Search cricket matches", "क्रिकेट मैच खोजो", "क्रिकेट सामने शोधा"],
+    ["Cricket market management", "क्रिकेट मार्केट प्रबंधन", "क्रिकेट मार्केट व्यवस्थापन"],
+    ["Open a cricket match and use Add market to configure team, session or player selections.", "टीम, सेशन या खिलाड़ी के चयन तय करने के लिए क्रिकेट मैच खोलो और मार्केट जोड़ो का उपयोग करो।", "संघ, सेशन किंवा खेळाडूंच्या निवडी ठरवण्यासाठी क्रिकेट सामना उघडा आणि मार्केट जोडा वापरा."],
+    ["Open cricket matches →", "क्रिकेट मैच खोलो →", "क्रिकेट सामने उघडा →"],
+
     ["OPINZO / CRICKET", "OPINZO / क्रिकेट", "OPINZO / क्रिकेट"],
     ["Your matchday.", "तुम्हारा मैच डे।", "तुमचा सामन्याचा दिवस."],
     ["Follow the score. Choose your team. Make every prediction count.", "स्कोर देखो। अपनी टीम चुनो। हर अनुमान सोचकर लगाओ।", "स्कोअर पाहा. तुमचा संघ निवडा. प्रत्येक अंदाज विचारपूर्वक वर्तवा."],

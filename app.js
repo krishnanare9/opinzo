@@ -21,10 +21,9 @@
   const num = (n) => Number(n || 0).toLocaleString('en-IN');
   const niceDate = (v) => v ? new Date(v).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
   const niceTime = (v) => v ? new Date(v).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '—';
-  const daysTo = (v) => { const d = Math.ceil((new Date(v) - Date.now()) / 86400000); return d > 1 ? `${d} days left` : d === 1 ? '1 day left' : d === 0 ? 'Closes today' : 'Closed'; };
+  const daysTo = (v) => { const d = Math.ceil((new Date(v) - Date.now()) / 86400000); return new Date(v).getTime() <= Date.now() ? 'Closed' : d > 1 ? `${d} days left` : d === 1 ? '1 day left' : d === 0 ? 'Closes today' : 'Closed'; };
   const id = () => (window.crypto?.randomUUID?.() || `d${Date.now()}${Math.random().toString(36).slice(2)}`);
   const safeLink = (u) => /^https:\/\/[^\s]+$/i.test(String(u||'')) ? esc(u) : '';
-  const readonlyMode = state.mode === 'live' && !state.user;
   const demoMarketSeeds = [
     {id:'demo-btc',question:'Will Bitcoin close above $100,000 at the end of this month?',category:'Crypto',description:'Illustrative market. Resolve using the BTC/USD UTC daily close from a clearly declared exchange.',yes_votes:213,no_votes:149,dayOffset:19},
     {id:'demo-eth',question:'Will Ethereum close above $4,000 at the end of this month?',category:'Crypto',description:'Illustrative market. Use the ETH/USD UTC close on the final calendar day.',yes_votes:176,no_votes:189,dayOffset:23},
@@ -44,7 +43,14 @@
     });
     return {markets,profile:{username:'Demo player',coin_balance:500},predictions:[],ledger:[{id:'welcome',amount:500,reason:'Welcome bonus',balance_after:500,created_at:new Date().toISOString()}]};
   }
-  function loadDemo() { try {const raw=localStorage.getItem(DEMO_KEY);return raw ? JSON.parse(raw) : seedDemo();} catch {return seedDemo();} }
+  function loadDemo() {
+    try {
+      const raw=localStorage.getItem(DEMO_KEY);if(!raw)return seedDemo();
+      const d=JSON.parse(raw);
+      if(!d||!Array.isArray(d.markets)||!Array.isArray(d.predictions)||!Array.isArray(d.ledger)||!d.profile||!Number.isInteger(d.profile.coin_balance)||d.profile.coin_balance<0) return seedDemo();
+      return d;
+    } catch {return seedDemo();}
+  }
   function saveDemo() {try {localStorage.setItem(DEMO_KEY,JSON.stringify(state.demo));} catch {toast('Browser storage is disabled: progress will not persist.','error');}}
   function getStats() {
     const resolved=state.predictions.filter(p=>p.status==='won'||p.status==='lost');
@@ -96,8 +102,8 @@
     if(state.category!=='All')markets=markets.filter(m=>m.category===state.category);
     if(state.query.trim()) {const q=state.query.trim().toLowerCase();markets=markets.filter(m=>(m.question+' '+m.category+' '+(m.description||'')).toLowerCase().includes(q));}
     if(state.view==='trending'||state.sort==='popular')markets.sort((a,b)=>Number(b.yes_votes||0)+Number(b.no_votes||0)-Number(a.yes_votes||0)-Number(a.no_votes||0));
-    if(state.sort==='ending')markets.sort((a,b)=>new Date(a.ends_at)-new Date(b.ends_at));
-    if(state.sort==='newest')markets.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(state.view!=='trending'&&state.sort==='ending')markets.sort((a,b)=>new Date(a.ends_at)-new Date(b.ends_at));
+    if(state.view!=='trending'&&state.sort==='newest')markets.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     return markets;
   }
   function marketList() {
@@ -168,7 +174,7 @@
     const m=getMarket(marketId);if(!m) return;
     if(marketStatus(m)!=='open'){toast('This prediction is closed.','error');return;}
     if(ownPick(marketId)){toast('You already made a prediction here.','error');return;}
-    if(readonlyMode){openAuth();toast('Sign in before placing a prediction.');return;}
+    if(state.mode==='live'&&!state.user){openAuth();toast('Sign in before placing a prediction.');return;}
     if(!state.profile){toast('Your account profile is not ready. Please refresh.','error');return;}
     state.modal={type:'vote',marketId};state.voteChoice=choice||'yes';state.stake=25;renderVote();
   }
@@ -214,7 +220,7 @@
     state.busy=true;
     try {
       if(state.mode==='demo') {
-        const target=state.demo.markets.find(x=>x.id===m.id);if(target.status==='resolved')throw Error('Already resolved');
+        const target=state.demo.markets.find(x=>x.id===m.id);if(target.status!=='open')throw Error('Already resolved');
         target.status=o==='void'?'void':'resolved';target.outcome=o==='void'?null:o;target.resolution_source=null;
         for(const p of state.demo.predictions.filter(p=>p.market_id===m.id&&p.status==='pending')){
           if(o==='void'){p.status='refunded';p.payout=p.stake;state.demo.profile.coin_balance+=p.stake;state.demo.ledger.push(ledgerEntry(p.stake,'Voided market refund · '+m.question,m.id));}
@@ -239,7 +245,7 @@
     try {
       if(state.mode==='demo') {state.demo.markets.unshift({id:id(),question:q,description,category,ends_at:end.toISOString(),created_at:new Date().toISOString(),status:'open',outcome:null,resolution_source:null,yes_votes:0,no_votes:0});saveDemo();setDemoState();}
       else {const {error}=await sb.rpc('admin_create_market',{p_question:q,p_description:description,p_category:category,p_ends_at:end.toISOString()});if(error)throw error;await loadLive();}
-      toast('Market created successfully.','success');render();
+      state.busy=false;toast('Market created successfully.','success');render();
     }catch(e){toast(humanError(e),'error');}finally{state.busy=false;}
   }
   async function authSubmit(form) {
@@ -249,7 +255,7 @@
     try {
       if(state.authTab==='signup'){
         const username=form.username.value.trim();if(!/^[\p{L}\p{N}_ .-]{3,20}$/u.test(username))throw Error('Use a 3–20 character nickname: letters, numbers, spaces, underscores or dashes.');
-        const {data,error}=await sb.auth.signUp({email,password,options:{data:{username}}});if(error)throw error;
+        const {data,error}=await sb.auth.signUp({email,password,options:{data:{username},emailRedirectTo:window.location.origin+window.location.pathname}});if(error)throw error;
         closeModal();toast(data.session?'Account created. Welcome to Opinzo!':'Check your email to confirm your account.','success');
       }else{const {error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;closeModal();toast('Signed in successfully.','success');}
       await refreshLive();
@@ -295,6 +301,12 @@
   $('#sideHow').addEventListener('click',openHow);
   $('#menuButton').addEventListener('click',()=>$('#sidebar').classList.toggle('mobile-open'));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)&&!$('#modalRoot .modal')){e.preventDefault();$('#searchInput').focus();}});
+  window.addEventListener('hashchange',()=>{
+    const view=window.location.hash.slice(1)||'explore';
+    if(['explore','trending','portfolio','wallet','leaderboard','admin'].includes(view)&&view!==state.view){
+      closeModal();state.view=view;state.category='All';state.query='';$('#searchInput').value='';render();
+    }
+  });
   document.getElementById('footerYear').textContent=String(new Date().getFullYear());
   async function init() {
     if(isConfigured&&!isLive){state.error='Supabase SDK failed to load. Check your connection or the script CDN.';}
@@ -308,3 +320,4 @@
   }
   init();
 })();
+

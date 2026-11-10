@@ -96,7 +96,7 @@
   function marketPerc(m) {const yes=Number(m.yes_votes||0),no=Number(m.no_votes||0); return yes+no ? Math.round(100*yes/(yes+no)):50;}
   function getMarket(marketId) {return state.markets.find(m=>String(m.id)===String(marketId));}
   function statCard(label,value,note,symbol) {return `<article class="stat-card"><div class="stat-card-top"><span>${esc(label)}</span><span class="stat-card-icon">${symbol}</span></div><strong>${value}</strong><small>${note}</small></article>`;}
-  function hero() {return `<section class="hero"><div class="hero-content"><span class="hero-kicker">✦&nbsp; THE FUTURE IS AN OPINION</span><h2>Think it. <span>Predict it.</span><br>Prove it.</h2><p>Turn your knowledge into a track record. Pick a side, earn virtual points, and rise on the leaderboard.</p><button class="btn-primary" data-action="scrollMarkets" type="button">Explore markets &nbsp;↗</button></div><div class="hero-floating"><span>Your decisions matter</span><strong>↑ Think ahead</strong></div><div class="hero-graphic"><svg viewBox="0 0 460 210" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#90e7db" stop-opacity=".35"/><stop offset="1" stop-color="#90e7db" stop-opacity="0"/></linearGradient></defs><path d="M0 182 L35 160 L64 170 L101 124 L139 136 L166 106 L204 114 L248 67 L289 88 L338 37 L369 54 L414 15 L460 -4 L460 210 L0 210 Z" fill="url(#chartFill)"/><path d="M0 182 L35 160 L64 170 L101 124 L139 136 L166 106 L204 114 L248 67 L289 88 L338 37 L369 54 L414 15 L460 -4" fill="none" stroke="#91eed6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="414" cy="15" r="7" fill="#e7fff7" stroke="#51ccb4" stroke-width="4"/></svg></div></section>`;}
+  function hero() {return `<section class="hero premium-hero"><img class="hero-art" src="assets/opinzo-hero-v1.webp" alt="" aria-hidden="true" width="1440" height="720" fetchpriority="high"><div class="hero-content"><span class="hero-kicker">✦&nbsp; THE FUTURE IS AN OPINION</span><h2>Think it. <span>Predict it.</span><br>Prove it.</h2><p>Turn your knowledge into a track record. Pick a side, earn virtual points, and rise on the leaderboard.</p><button class="btn-primary" data-action="scrollMarkets" type="button">Explore markets &nbsp;↗</button></div><div class="hero-floating"><span>Your decisions matter</span><strong>↑ Think ahead</strong></div></section>`;}
   function modeNotice() {return state.mode==='demo' ? `<div class="info-banner"><span class="info-symbol">ⓘ</span><div><strong>Preview mode is active.</strong><p>Predictions, points and the sample leaderboard are stored or simulated in this browser only. No real users, live prices, or real rewards. Connect Supabase to launch online accounts.</p></div></div>` : '' ;}
   function marketCard(m) {
     const s=marketStatus(m),pct=marketPerc(m),choice=ownPick(m.id),total=Number(m.yes_votes||0)+Number(m.no_votes||0);
@@ -192,7 +192,7 @@
   function cricketPanel() {
     return `<section class="cricket-panel" aria-label="Live cricket"><div class="section-heading"><div><div class="eyebrow">SPORTS / CRICKET</div><h2>🏏 Live cricket scores</h2><p>Current scores from ESPNcricinfo. Auto-refresh every 2 minutes while this page is visible.</p></div><button class="btn-outline btn-small" data-action="refreshCricket" type="button">Refresh scores</button></div><div id="cricketScores" aria-live="polite">${cricketContent()}</div><p class="subtle">Scores can be delayed by the provider. * marks the batting side in the source feed. Scores do not automatically settle prediction questions.</p></section>`;
   }
-  function cricketView(){return `<div class="eyebrow">SPORTS</div><h1 class="page-title">Cricket match centre</h1><p class="page-subtitle">Follow scores and open the full scorecard for match details.</p>${cricketPanel()}<button class="btn-outline" data-category="Sports" type="button">Browse Sports predictions →</button>`;}
+  function cricketView(){return `<section class="cricket-hero"><img src="assets/cricket-arena-v1.webp" class="cricket-hero-art" alt="" aria-hidden="true" width="1440" height="720" fetchpriority="high"><div class="cricket-hero-copy"><div class="eyebrow">SPORTS</div><h1 class="page-title">Cricket match centre</h1><p class="page-subtitle">Follow scores and open the full scorecard for match details.</p></div></section>${cricketPanel()}<button class="btn-outline" data-category="Sports" type="button">Browse Sports predictions →</button>`;}
   function cricketContent() {
     const c=state.cricket,d=c.data;
     if(!d)return `<div class="empty-state"><h3>${c.loading?'Fetching cricket scores…':c.error?'Scores temporarily unavailable':'Loading match centre…'}</h3><p>${esc(c.error||'Connecting to the score provider.')}</p></div>`;
@@ -466,6 +466,7 @@
   }
   init();
 })();
+
 
 
 

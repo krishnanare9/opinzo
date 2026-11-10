@@ -27,3 +27,69 @@ html[lang="hi"] .nav-link,html[lang="mr"] .nav-link{line-height:1.4}
 @media(max-width:785px){.language-picker{padding:6px 7px}.language-picker select{max-width:76px;font-size:11px}}
 @media(max-width:570px){.language-picker{gap:3px;padding:6px 5px}.language-picker select{max-width:60px;font-size:10px}.language-picker>span{font-size:11px}.header-actions{flex-shrink:0}.header-coins{padding:5px 6px}.header-login{max-width:67px;padding:7px 5px}.search-box{flex-basis:80px}.language-picker select:focus-visible{outline:1px solid #a895ff}}
 @media(max-width:390px){.language-picker>span{display:none}.language-picker select{max-width:57px}.topbar{gap:5px}.header-login{max-width:52px}}
+
+
+/* Opinzo premium visual layer. All game and account flows remain native. */
+:root{--bg:#080b14;--stroke:#293246;--stroke-soft:#20283b;--muted:#a0abc2;--purple:#a48aff;--teal:#6ae2c6}
+body{background:radial-gradient(ellipse at 48% 0,#29234136,transparent 44%),#080b14}
+.app-shell{background:linear-gradient(180deg,#0b0e18c9,#0b0e18f5)}
+.sidebar{background:linear-gradient(180deg,#111424,#0c101b);border-right-color:#ffffff0b;overflow-y:auto;scrollbar-width:thin}
+.brand-mark{box-shadow:0 0 0 5px #a58bff0b,0 10px 28px #7a56ff35}
+.nav-link{transition:background .2s,color .2s,box-shadow .2s,transform .2s}
+.nav-link:hover{transform:translateX(3px)}
+.nav-link.active{background:linear-gradient(100deg,#392d5a,#211e35);box-shadow:inset 3px 0 #b49aff,0 4px 18px #0002}
+.topbar{background:#0b0e18df;border-bottom-color:#ffffff0c}
+.search-box{background:#151b2abf;box-shadow:inset 0 1px #ffffff05}
+.header-login{background:linear-gradient(125deg,#9a7bf4,#7153d5);box-shadow:0 5px 18px #7657dd22}
+.page-body{padding-top:35px}.greeting{margin-bottom:24px}.greeting h1{letter-spacing:-.8px}
+.premium-hero{min-height:300px;background:#10101d;border-color:#8970c955;border-radius:24px;isolation:isolate;box-shadow:0 24px 60px #0003,inset 0 1px #ffffff14}
+.hero-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;pointer-events:none}
+.premium-hero:before{inset:0;width:auto;height:auto;border-radius:0;background:linear-gradient(90deg,#0e0d1e 0%,#10101fe6 31%,#1111224d 63%,transparent);filter:none;z-index:1}
+.premium-hero:after{inset:0;background:linear-gradient(0deg,#090c174d,transparent 65%);mask-image:none;z-index:1}
+.premium-hero .hero-content{padding:34px 34px;width:65%;max-width:540px;z-index:2}
+.premium-hero h2{font-size:clamp(30px,3.1vw,45px);line-height:1.08;letter-spacing:-1.5px;margin-bottom:15px;text-wrap:balance}
+.premium-hero h2 span{color:#c4b1ff}.premium-hero p{color:#c3bfd7;max-width:325px;font-size:13px;line-height:1.7}
+.hero-kicker{font-size:9px;letter-spacing:1.1px;background:#ffffff0a;backdrop-filter:blur(10px);border-color:#d9cdff30;padding:6px 10px}
+.premium-hero .hero-floating{top:auto;bottom:22px;right:24px;transform:none;background:#151828b8;border-color:#c8baff28;border-radius:13px;box-shadow:0 12px 30px #0003}
+.premium-hero .hero-floating strong{font-size:16px}
+.btn-primary{position:relative;overflow:hidden;background:linear-gradient(115deg,#a187ff,#8061e7);box-shadow:0 5px 18px #8059dc28,inset 0 1px #ffffff2a;transition:transform .2s,box-shadow .2s,filter .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 25px #8059dc40}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:after{content:'';position:absolute;inset:-80% -50%;background:linear-gradient(110deg,transparent 42%,#fff2 50%,transparent 58%);transform:translateX(-90%) rotate(12deg);transition:transform .55s;pointer-events:none}
+.btn-primary:hover:after{transform:translateX(90%) rotate(12deg)}
+.btn-outline,.chip,.option-card,.stake-picker button,.filter-select{transition:background .2s,border-color .2s,box-shadow .2s,transform .2s}
+.btn-outline:hover{background:#302c47}.chip:hover{border-color:#8674bb;color:#e1d6ff}
+.stat-card{background:linear-gradient(145deg,#191f30,#111624);border-color:#7585b329;box-shadow:inset 0 1px #ffffff08,0 10px 30px #0001;border-radius:17px;transition:transform .22s,border-color .22s}
+.stat-card:hover{transform:translateY(-3px);border-color:#aa91ed55}.stat-card strong{font-variant-numeric:tabular-nums}
+.stat-card-icon{background:#9b83ff12;border:1px solid #b6a0ff17;border-radius:9px;width:30px;height:30px;display:inline-grid;place-items:center}
+.market-card,.cricket-card{background:linear-gradient(145deg,#1a2030,#111724);border-color:#7b8dad29;box-shadow:inset 0 1px #ffffff08,0 12px 35px #0001;transition:transform .22s,border-color .22s,box-shadow .22s}
+.market-card:hover,.cricket-card:hover{transform:translateY(-4px);border-color:#b39cfa65;box-shadow:0 17px 34px #0003,inset 0 1px #ffffff0d}
+.market-card h3{letter-spacing:-.15px}.market-card-top{margin-bottom:18px}
+.market-status{border:1px solid #6de6ba20;background:#193c33;color:#83e7c5;font-size:9px;letter-spacing:.55px}
+.market-status.void{color:#b9c2d5;background:#252c3b;border-color:#8893ac20}
+.prob-bar{height:6px;background:#a15b7260}.yes-fill{transform-origin:left;animation:probability-fill .7s cubic-bezier(.2,.8,.2,1) both}
+.btn-yes{background:linear-gradient(135deg,#1b4d40,#16382f);border-color:#6dd7b14a}.btn-no{background:linear-gradient(135deg,#4c2837,#34222e);border-color:#dc8a9e40}
+.rail-card{border-color:#b6a4dc22;background:linear-gradient(145deg,#1d2134,#14192a);box-shadow:inset 0 1px #ffffff08}
+.rail-wallet{background:radial-gradient(ellipse at 95% 0,#9d7dff25,transparent 75%),linear-gradient(150deg,#25213f,#171b2e)}
+.rail-balance{font-variant-numeric:tabular-nums}.rail-header{letter-spacing:.1px}.tips-box{border-color:#b7a2e52d}
+.cricket-hero{position:relative;isolation:isolate;min-height:238px;border:1px solid #78c9ac35;border-radius:22px;overflow:hidden;margin-bottom:25px;background:#0d1b20;box-shadow:0 20px 50px #0003}
+.cricket-hero-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 64%;z-index:-2;pointer-events:none}
+.cricket-hero:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#07121be8 0%,#091a24c9 42%,#091a241a 75%);z-index:-1}
+.cricket-hero-copy{padding:42px 32px;max-width:62%}.cricket-hero .page-title{font-size:clamp(28px,3vw,39px);letter-spacing:-1px;color:#f2fcf7;line-height:1.12;text-wrap:balance}
+.cricket-hero .eyebrow{color:#92e5c4;letter-spacing:2.2px;margin-bottom:12px}.cricket-hero .page-subtitle{color:#c0d3d3;line-height:1.7;margin-bottom:0}
+.cricket-panel{background:linear-gradient(135deg,#13272588,#121a2c);border-color:#7cb9ad35;padding:24px}.cricket-status{padding:12px 14px;background:#07191366;border:1px solid #72c6b11d;border-radius:11px}
+.cricket-card{border-radius:16px}.cricket-card .eyebrow{font-size:8px;letter-spacing:1.6px;color:#8cbdb5}.cricket-card h3{line-height:1.55;font-size:17px}.cricket-predict{margin-top:20px}
+.mini-tag.yes{box-shadow:0 0 18px #51ddb310}.wide-panel,.wallet-hero{box-shadow:inset 0 1px #ffffff08,0 12px 36px #0002}.modal{background:linear-gradient(145deg,#202539,#151b2a);border-color:#b39bf34d;box-shadow:0 35px 100px #0009;animation:modal-appear .17s ease-out both}
+.modal-backdrop{backdrop-filter:blur(12px)}.field input,.field select,.field textarea{box-shadow:inset 0 1px 4px #0002}.field input:focus,.field select:focus,.field textarea:focus{box-shadow:0 0 0 3px #ad8dff12}
+.footer{border-top-color:#ffffff0b}.mobile-bottom{background:#101625f5}.count-badge{font-variant-numeric:tabular-nums;white-space:nowrap}
+@keyframes probability-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes surface-appear{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes modal-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:no-preference){.greeting,.cricket-hero,.premium-hero{animation:surface-appear .5s ease-out backwards}.stat-card{animation:surface-appear .42s ease-out backwards}.stat-card:nth-child(2){animation-delay:50ms}.stat-card:nth-child(3){animation-delay:100ms}.market-grid>.market-card,.cricket-grid>.cricket-card{animation:surface-appear .45s ease-out backwards}.market-grid>:nth-child(2),.cricket-grid>:nth-child(2){animation-delay:45ms}.market-grid>:nth-child(3),.cricket-grid>:nth-child(3){animation-delay:80ms}.market-grid>:nth-child(4),.cricket-grid>:nth-child(4){animation-delay:115ms}.market-grid>:nth-child(n+5),.cricket-grid>:nth-child(n+5){animation-delay:145ms}}
+@media(hover:none){.market-card:hover,.cricket-card:hover,.stat-card:hover,.nav-link:hover,.btn-primary:hover{transform:none}.btn-primary:after{display:none}}
+@media(max-width:1190px){.premium-hero{min-height:285px}.premium-hero .hero-content{width:65%}}
+@media(max-width:785px){.page-body{padding-top:25px}.premium-hero{min-height:285px}.premium-hero .hero-content{padding:30px 24px}.cricket-hero{min-height:225px}.cricket-hero-copy{padding:32px 24px;max-width:70%}.cricket-panel{padding:18px}}
+@media(max-width:570px){.premium-hero{min-height:320px;border-radius:20px}.premium-hero .hero-content{padding:28px 22px;width:100%;max-width:100%}.premium-hero h2{font-size:36px;max-width:245px}.premium-hero p{max-width:245px;font-size:12px}.hero-art{object-position:64% center;opacity:.58}.premium-hero:before{background:linear-gradient(90deg,#0e0d1ee8,#10101f94 75%,#11112224)}.premium-hero .hero-floating{display:none}.hero-kicker{font-size:8px;letter-spacing:.65px}.cricket-hero{min-height:220px}.cricket-hero-art{object-position:62% center;opacity:.8}.cricket-hero-copy{padding:30px 21px;max-width:85%}.cricket-hero .page-title{font-size:30px;max-width:240px}.cricket-hero .page-subtitle{font-size:12px;max-width:250px}.cricket-hero:before{background:linear-gradient(90deg,#07121bf2,#091a24b5 65%,#091a2429)}.cricket-panel{padding:15px}.cricket-card{padding:17px}.stat-card-icon{width:23px;height:23px;font-size:14px}.stat-card-top{gap:5px}.stat-card{border-radius:13px}.market-card{border-radius:17px}.nav-menu{margin-bottom:22px}.cricket-status{font-size:10px;padding:10px}.cricket-hero,.premium-hero{margin-bottom:25px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.market-card:hover,.cricket-card:hover,.stat-card:hover,.nav-link:hover,.btn-primary:hover{transform:none}.btn-primary:after{display:none}}
+
+html:lang(hi) .premium-hero h2,html:lang(mr) .premium-hero h2{line-height:1.3;letter-spacing:0}html:lang(hi) .cricket-hero .page-title,html:lang(mr) .cricket-hero .page-title{line-height:1.35;letter-spacing:0}

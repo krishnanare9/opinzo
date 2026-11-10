@@ -12,3 +12,6 @@
 
 
 .cricket-nav-live{font-size:9px;letter-spacing:.6px;color:var(--teal);margin-left:auto}.cricket-nav{padding-left:24px}.cricket-panel{margin-bottom:28px;padding:22px;background:linear-gradient(130deg,#142a2a,#171c30);border:1px solid #2b5951;border-radius:18px}.cricket-panel .section-heading{align-items:flex-start;gap:14px}.cricket-panel .section-heading p{max-width:650px}.cricket-status{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:11px;color:#a8c3bf;margin-bottom:17px}.cricket-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}.cricket-card{padding:19px;background:#111c29;border:1px solid #30484d;border-radius:13px;min-width:0}.cricket-card h3{font-size:18px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-line}.cricket-card a{font-size:12px}.cricket-panel .btn-outline{white-space:nowrap}@media(max-width:650px){.cricket-grid{grid-template-columns:1fr}.cricket-panel{padding:16px}.cricket-panel .section-heading{flex-wrap:wrap}.cricket-card h3{font-size:17px}}
+
+
+.cricket-predict{display:block;width:100%;margin-top:15px;padding:10px;font-size:12px}.cricket-market-list{margin-top:20px}.cricket-market-list .market-card h3{min-height:0}.cricket-market-list .market-card{margin-bottom:4px}.btn-yes,.btn-no{overflow-wrap:anywhere}

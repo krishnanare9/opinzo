@@ -26,3 +26,15 @@ begin
 end;$$;
 revoke all on function public.admin_create_cricket_market(text,text,text,numeric,text,text,text,timestamptz) from public,anon,authenticated;
 grant execute on function public.admin_create_cricket_market(text,text,text,numeric,text,text,text,timestamptz) to authenticated;
+
+-- Admin can stop a live cricket question immediately when play changes.
+create or replace function public.admin_close_cricket_market(p_market_id uuid)
+returns void language plpgsql security definer set search_path='' as $$
+begin
+ if not public.is_admin() then raise exception 'Admin access required';end if;
+ update public.markets set ends_at=least(ends_at,now())
+ where id=p_market_id and cricket_match_id is not null and status='open';
+ if not found then raise exception 'Open cricket question not found';end if;
+end;$$;
+revoke all on function public.admin_close_cricket_market(uuid) from public,anon,authenticated;
+grant execute on function public.admin_close_cricket_market(uuid) to authenticated;

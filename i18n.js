@@ -14,6 +14,22 @@
     mr:'Opinzo क्रिकेट — सामना केंद्र'
   };
   const dictionaryRows = [
+    ["Match centre · Schedule · Scores", "मैच सेंटर · समय-सारणी · स्कोर", "सामना केंद्र · वेळापत्रक · स्कोअर"],
+    ["Refresh", "रिफ्रेश", "अद्यतन करा"],
+    ["Times shown in IST (Asia/Kolkata).", "समय IST (Asia/Kolkata) में दिखाए गए हैं।", "वेळा IST (Asia/Kolkata) मध्ये दाखवल्या आहेत."],
+    ["“—” means the provider has not supplied verified data.", "“—” का मतलब प्रदाता से सत्यापित डेटा नहीं मिला है।", "“—” म्हणजे प्रदात्याकडून पडताळलेला डेटा मिळालेला नाही."],
+    ["Verified odds unavailable", "सत्यापित भाव उपलब्ध नहीं", "पडताळलेले भाव उपलब्ध नाहीत"],
+    ["Open match · provider price, not a guaranteed payout", "मैच खोलो · प्रदाता का भाव, तय भुगतान नहीं", "सामना उघडा · प्रदात्याचा भाव, हमीचा परतावा नाही"],
+    ["No verified matches for this filter", "इस फ़िल्टर में सत्यापित मैच नहीं हैं", "या फिल्टरमध्ये पडताळलेले सामने नाहीत"],
+    ["The current score feed does not supply match schedules, live status or exchange odds.", "वर्तमान स्कोर फ़ीड में मैच का समय, लाइव स्थिति या एक्सचेंज भाव नहीं मिलते।", "सध्याच्या स्कोअर फीडमध्ये सामन्याची वेळ, थेट स्थिती किंवा एक्सचेंज भाव मिळत नाहीत."],
+    ["DATE / TIME (IST) · MATCH", "तारीख / समय (IST) · मैच", "दिनांक / वेळ (IST) · सामना"],
+    ["Upcoming", "आगामी", "आगामी"],
+    ["Finished", "समाप्त", "समाप्त"],
+    ["1 = Team 1 · X = Draw · 2 = Team 2", "1 = टीम 1 · X = ड्रॉ · 2 = टीम 2", "1 = संघ 1 · X = अनिर्णित · 2 = संघ 2"],
+    ["Schedule, confirmed match status and exchange odds are not included in the current score feed. Missing values remain unavailable.", "वर्तमान स्कोर फ़ीड में समय-सारणी, पुष्ट मैच स्थिति और एक्सचेंज भाव नहीं हैं। बिना डेटा वाले मान उपलब्ध नहीं हैं।", "सध्याच्या स्कोअर फीडमध्ये वेळापत्रक, पुष्ट सामन्याची स्थिती आणि एक्सचेंज भाव नाहीत. डेटा नसलेली मूल्ये उपलब्ध नाहीत."],
+    ["Source: ESPNcricinfo score feed", "स्रोत: ESPNcricinfo स्कोर फ़ीड", "स्रोत: ESPNcricinfo स्कोअर फीड"],
+    ["Blue: Back · Pink: Lay · Provider prices are informational", "नीला: बैक · गुलाबी: ले · प्रदाता के भाव जानकारी के लिए हैं", "निळा: बॅक · गुलाबी: ले · प्रदात्याचे भाव माहितीसाठी आहेत"],
+
     ["WELCOME TO OPINZO CRICKET", "OPINZO क्रिकेट में स्वागत है", "OPINZO क्रिकेटमध्ये स्वागत आहे"],
     ["ALL ABOUT", "सब कुछ", "सर्व काही"],
     ["CRICKET.", "क्रिकेट।", "क्रिकेट."],

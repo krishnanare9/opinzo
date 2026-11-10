@@ -14,6 +14,15 @@
     mr:'Opinzo क्रिकेट — सामना केंद्र'
   };
   const dictionaryRows = [
+    ["One Day Internationals", "एकदिवसीय अंतरराष्ट्रीय मैच", "एकदिवसीय आंतरराष्ट्रीय सामने"],
+    ["Test Matches", "टेस्ट मैच", "कसोटी सामने"],
+    ["One Day Matches", "एकदिवसीय मैच", "एकदिवसीय सामने"],
+    ["Unclassified matches", "बिना लीग जानकारी वाले मैच", "स्पर्धेची माहिती नसलेले सामने"],
+    ["All cricket matches", "सभी क्रिकेट मैच", "सर्व क्रिकेट सामने"],
+    ["Competition data unavailable", "प्रतियोगिता की जानकारी उपलब्ध नहीं", "स्पर्धेची माहिती उपलब्ध नाही"],
+    ["League classification is not supplied by the current score feed.", "वर्तमान स्कोर फ़ीड में लीग की जानकारी नहीं मिलती।", "सध्याच्या स्कोअर फीडमध्ये स्पर्धेची माहिती मिळत नाही."],
+    ["Competition", "प्रतियोगिता", "स्पर्धा"],
+
     ["Match centre · Schedule · Scores", "मैच सेंटर · समय-सारणी · स्कोर", "सामना केंद्र · वेळापत्रक · स्कोअर"],
     ["Refresh", "रिफ्रेश", "अद्यतन करा"],
     ["Times shown in IST (Asia/Kolkata).", "समय IST (Asia/Kolkata) में दिखाए गए हैं।", "वेळा IST (Asia/Kolkata) मध्ये दाखवल्या आहेत."],

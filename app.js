@@ -15,7 +15,7 @@
     mode: isLive ? 'live' : 'demo', view:'cricket', category:'All', query:'', sort:'popular',
     markets:[], predictions:[], ledger:[], leaderboard:[], profile:null, user:null,
     admin:false, modal:null, voteChoice:'yes', stake:25, authTab:'signin', busy:false,
-    demo:null, error:'', recovery:recoveryArrival, cricketMatchId:null, cricketTab:'all', cricket:{data:null,loading:false,error:'',fetchedAt:0,lastAttempt:0,onlyOpen:false,onlyLive:false,kind:'all',listFilter:'all'}
+    demo:null, error:'', recovery:recoveryArrival, cricketMatchId:null, cricketTab:'all', cricket:{data:null,loading:false,error:'',fetchedAt:0,lastAttempt:0,onlyOpen:false,onlyLive:false,kind:'all',listFilter:'all',competitionsOpen:false,competition:'all',expandedCompetition:null}
   };
   const $ = (s) => document.querySelector(s);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -230,8 +230,36 @@
     if(state.cricketMatchId)return cricketEventView();
     return `<section class="ref-home-hero"><img src="assets/cricket-arena-v1.webp" alt="" aria-hidden="true" width="1440" height="720" fetchpriority="high"><div class="ref-hero-shape" aria-hidden="true"></div><div class="ref-hero-copy"><span class="ref-hero-eyebrow">WELCOME TO OPINZO CRICKET</span><h1><span>ALL ABOUT</span><br>CRICKET.</h1><p>One game. Every perspective.</p><div class="ref-hero-description">Follow the scores, back your knowledge and build your cricket track record with free virtual points.</div><button type="button" data-action="scrollCricket">EXPLORE MATCHES <span aria-hidden="true">↗</span></button><span class="ref-free-note">FREE TO PLAY · NO CASH VALUE</span></div><div class="ref-hero-badge"><span aria-hidden="true">🏏</span><strong>YOUR GAME.<br>YOUR CALL.</strong></div></section><section class="ref-feature-tiles" aria-label="Cricket sections"><button type="button" data-action="homeFilter" data-kind="winner"><span class="ref-tile-icon" aria-hidden="true">🏆</span><span><small>CHOOSE YOUR SIDE</small><strong>MATCH WINNER</strong><em>Explore team selections ↗</em></span></button><button type="button" data-action="homeFilter" data-kind="sessions"><span class="ref-tile-icon" aria-hidden="true">🏏</span><span><small>EVERY OVER COUNTS</small><strong>SESSIONS & OVERS</strong><em>Browse run lines ↗</em></span></button><button type="button" data-action="homeFilter" data-kind="players"><span class="ref-tile-icon" aria-hidden="true">✦</span><span><small>FOLLOW THE PLAYERS</small><strong>PLAYER MARKETS</strong><em>Runs and wickets ↗</em></span></button></section><div class="ref-home-matchlist" id="cricketMatchList">${cricketPanel()}</div><section class="ref-access-banner"><div class="ref-phone" aria-hidden="true"><span>OPINZO<span>🏏</span></span></div><div><span class="ref-access-eyebrow">OPINZO CRICKET</span><h2>Your matchday.<br>On every screen.</h2><p>Cricket scores and your prediction history, on desktop and mobile.</p></div><button type="button" data-view="portfolio">MY PREDICTIONS ↗</button></section><section class="ref-home-faq" aria-label="Cricket frequently asked questions"><details><summary>How does Opinzo Cricket work?</summary><p>Choose a match, read the market rules, then select a team or line using free virtual points. Confirm the stake before placing your prediction.</p></details><details><summary>Can I deposit or withdraw money?</summary><p>No. Opinzo uses free, non-transferable virtual points. They cannot be purchased, withdrawn or converted into cash.</p></details><details><summary>Are all matches and scores live?</summary><p>Scores come from ESPNcricinfo and may be delayed. A LIVE label is only shown when the provider explicitly confirms live status. Market selections require published lines and cutoff rules.</p></details></section><footer class="ref-home-footer"><div class="ref-footer-top"><span>🏏 CRICKET ONLY</span><span>FREE VIRTUAL POINTS</span><span>ENGLISH · हिंदी · मराठी</span></div><div class="ref-footer-columns"><div class="ref-footer-brand"><strong>OPIN<span>ZO</span></strong><p>A dedicated home for cricket scores, team selections and your prediction record.</p><small>Free to play. No cash value.</small></div><div><h3>Cricket</h3><button type="button" data-action="scrollCricket">Match centre</button><button type="button" data-action="homeFilter" data-kind="winner">Match winner</button><button type="button" data-action="homeFilter" data-kind="sessions">Sessions & overs</button><button type="button" data-action="homeFilter" data-kind="players">Player markets</button></div><div><h3>Your Opinzo</h3><button type="button" data-action="auth">My account</button><button type="button" data-view="portfolio">My predictions</button><button type="button" data-view="wallet">Point wallet</button><button type="button" data-view="leaderboard">Leaderboard</button></div><div><h3>How to play</h3><button type="button" data-action="showHow">Getting started</button><p>Read the cutoff. Review the rules. Confirm your free-point stake.</p><p>Results are settled after verification.</p></div></div><div class="ref-footer-bottom">© ${new Date().getFullYear()} Opinzo Cricket · Free-to-play · Non-transferable points · No money value</div></footer>`;
   }
+  const CRICKET_COMPETITIONS=[
+    {id:'odi',name:'One Day Internationals',aliases:['ODI','One Day International','One Day Internationals']},
+    {id:'sa-t20',name:'South Africa T20 Challenge',aliases:['South Africa T20 Challenge','CSA T20 Challenge']},
+    {id:'wbbl',name:'WBBL',aliases:['WBBL',"Women's Big Bash League"]},
+    {id:'tests',name:'Test Matches',aliases:['Tests','Test Matches','Test Match']},
+    {id:'one-day',name:'One Day Matches',aliases:['One Day Matches','One Day Match']},
+    {id:'abu-dhabi-t10',name:'Abu Dhabi T10',aliases:['Abu Dhabi T10']},
+    {id:'npl',name:'Nepal Premier League',aliases:['Nepal Premier League']}
+  ];
+  function cricketCompetitionName(match){
+    const c=match.competition;
+    return typeof c==='string'?c.trim():c&&typeof c.name==='string'?c.name.trim():'';
+  }
+  function cricketCompetitionId(match){
+    const name=cricketCompetitionName(match);if(!name)return 'unclassified';
+    const normalized=name.toLowerCase().replace(/\s+/g,' ');
+    return CRICKET_COMPETITIONS.find(c=>c.aliases.some(alias=>alias.toLowerCase()===normalized))?.id||'provider:'+normalized;
+  }
+  function cricketCompetitionGroups(){
+    const matches=state.cricket.data?.matches||[],groups=CRICKET_COMPETITIONS.map(c=>({...c,matches:[]}));
+    for(const match of matches){const id=cricketCompetitionId(match);let group=groups.find(g=>g.id===id);if(!group){group={id,name:id==='unclassified'?'Unclassified matches':cricketCompetitionName(match),matches:[]};groups.push(group);}group.matches.push(match);}
+    return groups;
+  }
+  function renderCompetitionNav(){
+    const target=$('#cricketCompetitionNav'),toggle=$('#cricketLeagueToggle');if(!target||!toggle)return;
+    const c=state.cricket;target.hidden=!c.competitionsOpen;toggle.setAttribute('aria-expanded',String(c.competitionsOpen));toggle.classList.toggle('active',state.view==='matches');
+    target.innerHTML=`<button type="button" class="competition-all ${c.competition==='all'?'selected':''}" data-action="competitionAll">All cricket matches</button>${cricketCompetitionGroups().map(group=>{const expanded=c.expandedCompetition===group.id;return `<div class="competition-group"><div class="competition-heading ${c.competition===group.id?'selected':''}"><button class="competition-name" type="button" data-action="competitionSelect" data-id="${esc(group.id)}">${esc(group.name)}</button><button class="competition-expand" type="button" data-action="competitionExpand" data-id="${esc(group.id)}" aria-expanded="${expanded}" aria-label="${esc((expanded?'Collapse ':'Expand ')+group.name)}">${expanded?'−':'+'}</button></div>${expanded?`<div class="competition-fixtures">${group.matches.length?group.matches.map(match=>`<button type="button" data-action="matchPredictions" data-id="${esc(match.id)}">${esc(cricketMatchName(match))}<span>${cricketMatchTime(match)}</span></button>`).join(''):'<p>Competition data unavailable</p>'}</div>`:''}</div>`;}).join('')}<p class="competition-note">League classification is not supplied by the current score feed.</p>`;
+  }
   function cricketMatchesView(){
-    return `<section class="cricket-list-banner"><img src="assets/cricket-arena-v1.webp" alt="" aria-hidden="true" width="1440" height="720"><div><span>OPINZO</span><h1>CRICKET</h1><p>Match centre · Schedule · Scores</p></div></section><section class="cricket-list-board"><div class="cricket-list-heading"><h2>Cricket</h2><button type="button" data-action="refreshCricket">Refresh</button></div><div id="cricketScores" aria-live="polite">${cricketContent()}</div></section><div class="cricket-list-explainer"><span>Times shown in IST (Asia/Kolkata).</span><span>“—” means the provider has not supplied verified data.</span></div>`;
+    return `<section class="cricket-list-banner"><img src="assets/cricket-arena-v1.webp" alt="" aria-hidden="true" width="1440" height="720"><div><span>OPINZO</span><h1>CRICKET</h1><p>Match centre · Schedule · Scores</p></div></section><section class="cricket-list-board"><div class="cricket-list-heading"><h2>Cricket${state.cricket.competition&&state.cricket.competition!=='all'?' / '+esc(cricketCompetitionGroups().find(g=>g.id===state.cricket.competition)?.name||'Competition'):''}</h2><label class="mobile-competition-picker"><span class="sr-only">Competition</span><select id="mobileCompetitionSelect" aria-label="Competition"><option value="all">All cricket matches</option>${cricketCompetitionGroups().map(g=>`<option value="${esc(g.id)}" ${state.cricket.competition===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label><button type="button" data-action="refreshCricket">Refresh</button></div><div id="cricketScores" aria-live="polite">${cricketContent()}</div></section><div class="cricket-list-explainer"><span>Times shown in IST (Asia/Kolkata).</span><span>“—” means the provider has not supplied verified data.</span></div>`;
   }
   function cricketMatchTime(match){
     const time=Date.parse(match.startsAt||'');
@@ -244,14 +272,14 @@
   }
   function cricketExchangeRows(matches){
     const filter=state.cricket.listFilter||'all',statusFor={live:'live',upcoming:'scheduled',finished:'completed'};
-    const rows=matches.filter(m=>(!state.query||String(m.score||'').toLowerCase().includes(state.query.toLowerCase()))&&(filter==='all'||cricketMatchState(m)===statusFor[filter]));
+    const rows=matches.filter(m=>(!state.cricket.competition||state.cricket.competition==='all'||cricketCompetitionId(m)===state.cricket.competition)&&(!state.query||String(m.score||'').toLowerCase().includes(state.query.toLowerCase()))&&(filter==='all'||cricketMatchState(m)===statusFor[filter]));
     rows.sort((a,b)=>{const rank={live:0,scheduled:1,unknown:2,completed:3};const difference=rank[cricketMatchState(a)]-rank[cricketMatchState(b)];if(difference)return difference;const at=Date.parse(a.startsAt||''),bt=Date.parse(b.startsAt||'');return Number.isFinite(at)&&Number.isFinite(bt)?at-bt:0;});
-    if(!rows.length)return `<div class="cricket-list-empty"><h3>No verified matches for this filter</h3><p>The current score feed does not supply match schedules, live status or exchange odds.</p><button type="button" data-action="listFilter" data-filter="all">Show all matches</button></div>`;
+    if(!rows.length)return `<div class="cricket-list-empty"><h3>No verified matches for this filter</h3><p>The current score feed does not supply match schedules, live status or exchange odds.</p><button type="button" data-action="competitionAll">Show all matches</button></div>`;
     return `<div class="cricket-exchange-scroll"><table class="cricket-exchange-table"><caption class="sr-only">Cricket match schedule, status and provider prices. Times in IST. Missing data is shown as a dash.</caption><thead><tr><th scope="col" class="cricket-event-label">DATE / TIME (IST) · MATCH</th><th scope="colgroup" colspan="2">1</th><th scope="colgroup" colspan="2">X</th><th scope="colgroup" colspan="2">2</th></tr></thead><tbody>${rows.map(match=>`<tr><td><div class="cricket-compact-match"><time class="cricket-start-time" ${Number.isFinite(Date.parse(match.startsAt||''))?`datetime="${esc(match.startsAt)}"`:''}>${cricketMatchTime(match)}</time><span class="cricket-row-divider">|</span><button type="button" class="cricket-match-link" data-action="matchPredictions" data-id="${esc(match.id)}">${esc(cricketMatchName(match))}</button>${cricketLiveBadge(match)}</div></td>${['one','draw','two'].map(runner=>['back','lay'].map(side=>cricketPriceCell(match,runner,side)).join('')).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
   function cricketListContent(){
     const c=state.cricket,d=c.data;
-    const controls=`<div class="cricket-list-controls">${[['all','All matches'],['live','Live'],['upcoming','Upcoming'],['finished','Finished']].map(([key,label])=>`<button type="button" data-action="listFilter" data-filter="${key}" class="${(c.listFilter||'all')===key?'active':''}" aria-pressed="${(c.listFilter||'all')===key}">${label}</button>`).join('')}<span>1 = Team 1 · X = Draw · 2 = Team 2</span></div>`;
+    const controls=`<div class="cricket-list-controls">${[['all','All matches'],['live','Live'],['upcoming','Upcoming'],['finished','Finished']].map(([key,label])=>`<button type="button" data-action="listFilter" data-filter="${key}" class="${(c.listFilter||'all')===key?'active':''}" aria-pressed="${(c.listFilter||'all')===key}">${label}</button>`).join('')}<span>${state.cricket.competition&&state.cricket.competition!=='all'?esc(cricketCompetitionGroups().find(g=>g.id===state.cricket.competition)?.name||'Competition')+' · ':''}1 = Team 1 · X = Draw · 2 = Team 2</span></div>`;
     if(!d)return controls+`<div class="cricket-list-empty"><h3>${c.loading?'Fetching cricket scores…':'Scores temporarily unavailable'}</h3><p>${esc(c.error||'Connecting to the score provider.')}</p></div>`;
     return controls+`<div class="cricket-list-data-note">Schedule, confirmed match status and exchange odds are not included in the current score feed. Missing values remain unavailable.</div>${c.error?`<p class="form-error">${esc(c.error)} Showing the last received scores.</p>`:''}${cricketExchangeRows(d.matches)}<div class="cricket-list-source"><span>Source: ESPNcricinfo score feed</span><span>${c.loading?'Refreshing…':d.sourcePublishedAt?'Provider update: '+niceTime(d.sourcePublishedAt):'Provider update time unavailable'}</span><span>Blue: Back · Pink: Lay · Provider prices are informational</span></div>`;
   }
@@ -290,7 +318,7 @@
       if(!Array.isArray(d.matches)||!d.matches.length)throw Error('No current scores returned.');
       c.data=d;c.error='';c.fetchedAt=Date.now();
     }catch(e){c.error=e.name==='TimeoutError'?'Score request timed out. Please retry.':humanError(e);}
-    finally{c.loading=false;const target=$('#cricketScores');if(target)target.innerHTML=cricketContent();}
+    finally{c.loading=false;const target=$('#cricketScores');if(target)target.innerHTML=cricketContent();renderCompetitionNav();}
   }
   function renderMain() {
     document.body.classList.add('sports-mode');
@@ -304,6 +332,7 @@
     if($('#cricketScores'))window.setTimeout(()=>loadCricket(false),0);
     const defaultTime=new Date(Date.now()+86400000);defaultTime.setMinutes(defaultTime.getMinutes()-defaultTime.getTimezoneOffset());
     const endInput=$('#adminEnd');if(endInput&&!endInput.value)endInput.value=defaultTime.toISOString().slice(0,16);
+    renderCompetitionNav();
   }
   function renderRail() {
     const p=state.profile,stats=getStats(),top=state.leaderboard.slice(0,4);
@@ -461,7 +490,10 @@
   async function googleAuth() {if(!sb)return;const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});if(error)toast(humanError(error),'error');}
   function runAction(button) {
     const action=button.dataset.action,mId=button.dataset.id;
-    if(action==='listFilter'){if(!['all','live','upcoming','finished'].includes(button.dataset.filter))return;state.cricket.listFilter=button.dataset.filter;renderMain();}
+    if(action==='toggleCompetitions'){state.cricket.competitionsOpen=!state.cricket.competitionsOpen;if(state.view!=='matches')navigate('matches');else renderCompetitionNav();}
+    else if(action==='competitionAll'){state.cricket.competition='all';state.cricket.listFilter='all';state.query='';$('#searchInput').value='';renderMain();}
+    else if(action==='competitionSelect'||action==='competitionExpand'){if(!cricketCompetitionGroups().some(g=>g.id===mId))return;state.cricket.competition=mId;state.cricket.listFilter='all';state.query='';$('#searchInput').value='';if(action==='competitionExpand')state.cricket.expandedCompetition=state.cricket.expandedCompetition===mId?null:mId;else state.cricket.expandedCompetition=mId;renderMain();}
+    else if(action==='listFilter'){if(!['all','live','upcoming','finished'].includes(button.dataset.filter))return;state.cricket.listFilter=button.dataset.filter;renderMain();}
     else if(action==='showHow')openHow();
     else if(action==='homeSignup'){if(state.user||state.mode==='demo'||state.recovery)openAuth();else{state.authTab='signup';renderAuth();}}
     else if(action==='homeFilter'){if(state.view==='matches'&&button.dataset.live==='true'){state.cricket.listFilter='live';renderMain();return;}if(state.view!=='cricket'||state.cricketMatchId)navigate('cricket');state.cricket.kind=['winner','sessions','players','wickets'].includes(button.dataset.kind)?button.dataset.kind:'all';state.cricket.onlyLive=button.dataset.live==='true';state.cricket.onlyOpen=false;renderMain();window.setTimeout(()=>$('#cricketMatchList')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'}),0);}
@@ -506,7 +538,7 @@
     if(e.target.id==='settleForm'){e.preventDefault();settle(e.target);}
   });
   $('#sortSelect')?.addEventListener('change',e=>{state.sort=e.target.value;renderMain();});
-  document.addEventListener('change',e=>{if(e.target.id==='cricketKind'&&e.target.value==='single_over')$('#cricketPeriod').value='Single over: 11 · 1st innings';if(e.target.id==='cricketKindFilter'){state.cricket.kind=e.target.value;renderMain();}if(e.target.id==='sortSelect'){state.sort=e.target.value;renderMain();}});
+  document.addEventListener('change',e=>{if(e.target.id==='mobileCompetitionSelect'){const competition=e.target.value;if(competition==='all'||cricketCompetitionGroups().some(g=>g.id===competition)){state.cricket.competition=competition;state.cricket.listFilter='all';renderMain();}}if(e.target.id==='cricketKind'&&e.target.value==='single_over')$('#cricketPeriod').value='Single over: 11 · 1st innings';if(e.target.id==='cricketKindFilter'){state.cricket.kind=e.target.value;renderMain();}if(e.target.id==='sortSelect'){state.sort=e.target.value;renderMain();}});
   $('#searchInput').addEventListener('input',e=>{state.query=e.target.value;if(!['cricket','matches'].includes(state.view)){state.view='matches';state.cricketMatchId=null;window.location.hash='matches';}renderMain();renderTop();});
   $('#walletTop').addEventListener('click',()=>navigate('wallet'));
   $('#authButton').addEventListener('click',openAuth);

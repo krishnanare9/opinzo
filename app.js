@@ -21,8 +21,8 @@
   const $ = (s) => document.querySelector(s);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = (n) => Number(n || 0).toLocaleString('en-IN');
-  const niceDate = (v) => v ? new Date(v).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
-  const niceTime = (v) => v ? new Date(v).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '—';
+  const niceDate = (v) => v ? new Date(v).toLocaleDateString(window.OPINZO_I18N?.dateLocale || 'en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+  const niceTime = (v) => v ? new Date(v).toLocaleString(window.OPINZO_I18N?.dateLocale || 'en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '—';
   const daysTo = (v) => { const d = Math.ceil((new Date(v) - Date.now()) / 86400000); return new Date(v).getTime() <= Date.now() ? 'Closed' : d > 1 ? `${d} days left` : d === 1 ? '1 day left' : d === 0 ? 'Closes today' : 'Closed'; };
   const id = () => (window.crypto?.randomUUID?.() || `d${Date.now()}${Math.random().toString(36).slice(2)}`);
   const safeLink = (u) => /^https:\/\/[^\s]+$/i.test(String(u||'')) ? esc(u) : '';
@@ -121,7 +121,7 @@
     const st=getStats();
     const balance=state.profile?num(state.profile.coin_balance):'—';
     const name=state.profile?.username?.split(' ')[0]||'there';
-    return `<div class="greeting"><div><h1>Hey, ${esc(name)} <span aria-hidden="true">👋</span></h1><p>Ready to put your perspective to the test?</p></div><span class="small-clock">${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span></div>${modeNotice()}${hero()}<section class="stat-grid">${statCard('Your balance',balance,'Free virtual points','◈')}${statCard('Active predictions',state.profile?st.active:'—','Waiting for results','▤')}${statCard('Prediction accuracy',state.profile?st.accuracy+'%':'—',`${st.settled} resolved picks`,'⌁')}</section>${marketList()}`;
+    return `<div class="greeting"><div><h1>Hey, ${esc(name)} <span aria-hidden="true">👋</span></h1><p>Ready to put your perspective to the test?</p></div><span class="small-clock">${new Date().toLocaleDateString(window.OPINZO_I18N?.dateLocale || 'en-IN',{day:'numeric',month:'short',year:'numeric'})}</span></div>${modeNotice()}${hero()}<section class="stat-grid">${statCard('Your balance',balance,'Free virtual points','◈')}${statCard('Active predictions',state.profile?st.active:'—','Waiting for results','▤')}${statCard('Prediction accuracy',state.profile?st.accuracy+'%':'—',`${st.settled} resolved picks`,'⌁')}</section>${marketList()}`;
   }
   function trendingView() {return `<div class="eyebrow">THE COMMUNITY</div><h1 class="page-title">What's trending</h1><p class="page-subtitle">The most-picked prediction questions in our community.</p>${modeNotice()}${marketList()}`;}
   function resultBadge(p) {return p.status==='won'?'<span class="mini-tag yes">✓ WON</span>':p.status==='lost'?'<span class="mini-tag no">✕ LOST</span>':p.status==='refunded'?'<span class="mini-tag">↩ REFUNDED</span>':'<span class="mini-tag">◷ PENDING</span>';}
@@ -435,6 +435,7 @@
   });
   window.setInterval(()=>{if($('#cricketScores'))loadCricket(false);},120000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&$('#cricketScores'))loadCricket(false);});
+  window.addEventListener('opinzo:language-changed',()=>{if(state.view!=='admin')render();});
   document.getElementById('footerYear').textContent=String(new Date().getFullYear());
   async function init() {
     if(isConfigured&&!isLive){state.error='Supabase SDK failed to load. Check your connection or the script CDN.';}
